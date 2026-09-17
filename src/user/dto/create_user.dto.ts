@@ -26,7 +26,7 @@ export class CreateUserDto {
         example: 'male',
     })
     @IsNotEmpty({ message: i18nValidationMessage('validation.SELECT_GENDER') })
-    @Matches(/^(male|female|other)$/, { message: i18nValidationMessage('validarion.VALID_GENDER') })
+    @Matches(/^(male|female|other)$/, { message: i18nValidationMessage('validation.VALID_GENDER') })
     gender!: string;
 
     @ApiProperty({

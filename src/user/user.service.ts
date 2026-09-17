@@ -49,7 +49,6 @@ export class UserService {
             const user = await Transaction_user.findOneOrFail({
                 where: { email: loginDto.email },
                 lock: { mode: 'pessimistic_write' },
-
             });
             const status = (await (Transaction_otp.findOneBy({ userId: user.id })) ?? Transaction_otp.create({ userId: user.id }));
             const result = issueOtp(status, this.config.getOrThrow<string>('OTP_HMAC_SECRET'));
