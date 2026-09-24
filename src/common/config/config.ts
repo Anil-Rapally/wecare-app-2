@@ -1,6 +1,10 @@
 import type { DataSourceOptions } from 'typeorm';
+
 import { UserEntity } from '../../user/entity/user.entity';
 import { OtpEntity } from '../../user/entity/otp.entity';
+import { Report } from '../../user/entity/reports.entity';
+import { Collection } from '../../user/entity/collection.entity';
+
 import { UserLogin1789471325599 } from 'src/database/migrations/1789471325599-UserLogin';
 import { UserOtp1789472984498 } from 'src/database/migrations/1789472984498-UserOtp';
 
@@ -68,7 +72,7 @@ export function databaseOptions(): DataSourceOptions {
     database: process.env.DB_DATABASE,
     charset: 'utf8mb4_unicode_ci',
     timezone: 'Z',
-    entities: [UserEntity, OtpEntity],
+    entities: [UserEntity, OtpEntity, Report, Collection,],
     migrations: [UserLogin1789471325599, UserOtp1789472984498],
     migrationsTableName: 'migrations',
     synchronize: false,
