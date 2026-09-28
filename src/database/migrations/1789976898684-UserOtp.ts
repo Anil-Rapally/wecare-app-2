@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 import { Table, TableForeignKey } from "typeorm";
 
-export class UserOtp1789472984498 implements MigrationInterface {
+export class UserOtp1789976898684 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.createTable(
@@ -9,72 +9,62 @@ export class UserOtp1789472984498 implements MigrationInterface {
                 name: 'Otps',
                 columns: [
                     {
-                        name: 'otpId',
+                        name: 'email',
                         type: 'varchar',
-                        length: '36',
+                        length: '300',
+                        isPrimary: true,
                         isNullable: false,
                     },
                     {
-                        name: 'otpHash',
+                        name: 'otp_hash',
                         type: 'varchar',
                         length: '64',
                         isNullable: false,
                     },
                     {
-                        name: 'createdAt',
-                        type: 'datetime',
+                        name: 'user_id',
+                        type: 'varchar',
+                        length: '36',
                         isNullable: true,
                     },
                     {
-                        name: 'expiresAt',
-                        type: 'datetime',
-                        isNullable: true,
-                    },
-                    {
-                        name: 'lastSentAt',
-                        type: 'datetime',
-                        isNullable: true,
-                    },
-                    {
-                        name: 'sendWindowStartedAt',
-                        type: 'datetime',
-                        isNullable: true,
-                    },
-                    {
-                        name: 'sendCount',
+                        name: 'resend_count',
                         type: 'int',
                         unsigned: true,
                         isNullable: false,
                         default: '0',
                     },
                     {
-                        name: 'failureWindowStartedAt',
+                        name: 'daily_count_reset_at',
                         type: 'datetime',
                         isNullable: true,
                     },
                     {
-                        name: 'failedAttempts',
+                        name: 'daily_resend_count',
                         type: 'int',
                         unsigned: true,
+                        default: '0',
                         isNullable: false,
-                        default: 0,
                     },
                     {
-                        name: 'lockedUntil',
+                        name: 'next_resend_at',
+                        type: 'datetime',
+                        isNullable: false,
+                    },
+                    {
+                        name: 'created_at',
                         type: 'datetime',
                         isNullable: true,
                     },
                     {
-                        name: 'userId',
-                        type: 'varchar',
-                        length: '36',
-                        isPrimary: true,
-                        isNullable: false,
+                        name: 'expires_at',
+                        type: 'datetime',
+                        isNullable: true,
                     },
                 ],
                 foreignKeys: [
                     new TableForeignKey({
-                        columnNames: ['userId'],
+                        columnNames: ['user_id'],
                         referencedTableName: 'User',
                         referencedColumnNames: ['id'],
                         onDelete: 'CASCADE',
@@ -89,3 +79,4 @@ export class UserOtp1789472984498 implements MigrationInterface {
         await queryRunner.dropTable('Otps');
     }
 }
+

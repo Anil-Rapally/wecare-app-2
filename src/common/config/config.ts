@@ -1,8 +1,8 @@
 import type { DataSourceOptions } from 'typeorm';
 import { UserEntity } from '../../user/entity/user.entity';
 import { OtpEntity } from '../../user/entity/otp.entity';
-import { UserLogin1789471325599 } from 'src/database/migrations/1789471325599-UserLogin';
-import { UserOtp1789472984498 } from 'src/database/migrations/1789472984498-UserOtp';
+import { UserOtp1789976898684} from '../../database/migrations/1789976898684-UserOtp';
+import { UserLogin1789976838345} from '../../database/migrations/1789976838345-UserLogin';
 
 
 export function validateEnvironment(environment: Record<string, unknown>): Record<string, unknown> {
@@ -69,7 +69,7 @@ export function databaseOptions(): DataSourceOptions {
     charset: 'utf8mb4_unicode_ci',
     timezone: 'Z',
     entities: [UserEntity, OtpEntity],
-    migrations: [UserLogin1789471325599, UserOtp1789472984498],
+    migrations: [UserLogin1789976838345, UserOtp1789976898684],
     migrationsTableName: 'migrations',
     synchronize: false,
     migrationsRun: false,

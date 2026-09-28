@@ -3,7 +3,7 @@ import { LoginDto } from './dto/login.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { CreateUserDto } from './dto/create_user.dto';
 import { AuthGuard, RequirePurpose } from '../common/guards/auth.guard';
-import { MAX_PHOTO_BYTES } from './photo/photo.service';
+import { max_photo_bytes } from './photo/photo.service';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -34,7 +34,7 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 @ApiTags('User')
 @Controller('user')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(private readonly userService: UserService) { }
 
   @ApiOperation({ summary: 'Request an email OTP' })
   @ApiBody({ type: LoginDto })
@@ -71,7 +71,7 @@ export class UserController {
     status: 429,
     description: 'Too many verification attempts',
   })
-  @Post('verify-otp')
+  @Post('verifyotp')
   @HttpCode(200)
   @Header('Cache-Control', 'no-store')
   verifyOtp(@Body() verifyOtpDto: VerifyOtpDto) {
@@ -129,7 +129,7 @@ export class UserController {
     status: 401,
     description: 'Missing or invalid access token',
   })
-  @Post('profile-photo')
+  @Post('uploadphoto')
   @HttpCode(200)
   @Header('Cache-Control', 'no-store')
   @UseGuards(AuthGuard)
@@ -137,7 +137,7 @@ export class UserController {
   @UseInterceptors(
     FileInterceptor('file', {
       storage: memoryStorage(),
-      limits: { fileSize: MAX_PHOTO_BYTES, files: 1, fields: 0 },
+      limits: { fileSize: max_photo_bytes, files: 1, fields: 0 },
     }),
   )
   uploadPhoto(
@@ -157,15 +157,13 @@ export class UserController {
     status: 401,
     description: 'Missing or invalid access token',
   })
-  @Get('profile')
+  @Get('userprofile')
   @Header('Cache-Control', 'no-store')
   @UseGuards(AuthGuard)
   @RequirePurpose('access')
   getProfile(@CurrentUser() user: UserEntity) {
     return {
       ...this.userService.publicUser(user),
-      isEmailVerified: user.isEmailVerified,
-      isProfileExists: user.isProfileExists,
     };
   }
 
@@ -192,7 +190,7 @@ export class UserController {
     status: 401,
     description: 'Missing or invalid access token',
   })
-  @Get('profile-photo')
+  @Get('userprofilephoto')
   @Header('Cache-Control', 'no-store')
   @Header('X-Content-Type-Options', 'nosniff')
   @UseGuards(AuthGuard)

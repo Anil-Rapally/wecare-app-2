@@ -7,11 +7,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from 'src/common/auth/auth.module';
 import { EmailService } from 'src/common/email/email.service';
 import { PhotoService } from './photo/photo.service';
+import { OtpService } from './otp/otp.service';
 
 
 @Module({
     imports: [TypeOrmModule.forFeature([UserEntity, OtpEntity]), AuthModule],
     controllers: [UserController],
-    providers: [UserService, EmailService, PhotoService],
+    providers: [UserService, EmailService, PhotoService, OtpService],
 })
 export class UserModule {}

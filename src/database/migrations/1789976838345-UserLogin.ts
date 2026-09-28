@@ -1,9 +1,9 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 import { Table, TableUnique } from "typeorm";
 
-export class UserLogin1789471325599 implements MigrationInterface {
+export class UserLogin1789976838345 implements MigrationInterface {
 
-      async up(queryRunner: QueryRunner): Promise<void> {
+async up(queryRunner: QueryRunner): Promise<void> {
     const hasUsers = await queryRunner.hasTable('users');
     if (hasUsers) {
       throw new Error(
@@ -29,13 +29,13 @@ export class UserLogin1789471325599 implements MigrationInterface {
               isNullable: false,
             },
             {
-              name: 'fullName',
+              name: 'full_name',
               type: 'varchar',
               length: '200',
               isNullable: true,
             },
             {
-              name: 'dateOfBirth',
+              name: 'date_of_birth',
               type: 'date',
               isNullable: true,
             },
@@ -46,13 +46,13 @@ export class UserLogin1789471325599 implements MigrationInterface {
               isNullable: true,
             },
             {
-              name: 'bloodGroup',
+              name: 'blood_group',
               type: 'varchar',
               length: '3',
               isNullable: true,
             },
             {
-              name: 'emergencyContact',
+              name: 'emergency_contact',
               type: 'varchar',
               length: '25',
               isNullable: true,
@@ -64,28 +64,32 @@ export class UserLogin1789471325599 implements MigrationInterface {
               isNullable: true,
             },
             {
-              name: 'profilePhotoUrl',
+              name: 'profile_photo_url',
               type: 'varchar',
               length: '1000',
               isNullable: true,
             },
             {
-              name: 'profilePhoto',
+              name: 'profile_photo',
               type: 'mediumblob',
               isNullable: true,
             },
             {
-              name: 'isEmailVerified',
+              
+              name: 'is_profile_exists',
               type: 'tinyint',
               isNullable: false,
               default: '0',
             },
             {
-              
-              name: 'isProfileExists',
-              type: 'tinyint',
-              isNullable: false,
-              default: '0',
+              name: 'created_at',
+              type: 'datetime',
+              isNullable: true,
+            },
+            {
+              name: 'updated_at',
+              type: 'datetime',
+              isNullable: true,
             },
           ],
           uniques: [

@@ -7,9 +7,9 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { I18nValidationPipe } from 'nestjs-i18n';
-import { ResponseInterceptor } from './common/interceptors/Response.interceptor';
-import { ValidationExceptionFilter } from './common/filters/ValidationException.filter';
-import { HttpExceptionFilter } from './common/filters/HttpException.filter';
+import { ResponseInterceptor } from './common/interceptors/response.interceptor';
+import { ValidationExceptionFilter } from './common/filters/validation_exception.filter';
+import { HttpExceptionFilter } from './common/filters/http_exception.filter';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);

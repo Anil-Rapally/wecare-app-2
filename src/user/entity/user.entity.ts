@@ -1,7 +1,24 @@
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn, Unique } from 'typeorm';
-import { IsNotEmpty, Matches } from 'class-validator';
+import { IsEnum, IsNotEmpty } from 'class-validator';
 import { OtpEntity } from './otp.entity';
+import { i18nValidationMessage } from 'nestjs-i18n';
 
+export enum Gender{
+    Male = 'male',
+    Female = 'female',
+    Others = 'others'
+}
+
+export enum BloodGroup{
+    A_POSITIVE = 'A+',
+    A_NEGATIVE = 'A-',
+    B_POSITIVE = 'B+',
+    B_NEGATIVE = 'B-',
+    AB_POSITIVE = 'AB+',
+    AB_NEGATIVE = 'AB-',
+    O_POSITIVE = 'O+',
+    O_NEGATIVE = 'O-',
+}
 
 @Entity('User')
 @Unique(['email'])
@@ -15,42 +32,44 @@ export class UserEntity {
     @IsNotEmpty()
     email!: string;
 
-
     @Column({ type: 'varchar', length: 200, nullable: true })
     @IsNotEmpty()
-    fullName!: string;
+    full_name!: string;
 
     @Column({ type: 'date', nullable: true })
-    dateOfBirth!: string;
+    date_of_birth!: string;
 
-    @Column({ type: 'varchar', length: 20, nullable: true })
+    @Column({ type: 'enum', enum: Gender, nullable: true })
     @IsNotEmpty()
-    @Matches(/^(male|female|other)$/)
+    @IsEnum(Gender)
     gender!: string;
 
-    @Column({ type: 'varchar', length: 3, nullable: true })
+    @Column({ type: 'enum', enum: BloodGroup, nullable: true })
     @IsNotEmpty()
-    @Matches(/^(A|B|AB|O)[+-]$/)
-    bloodGroup!: string;
+    @IsEnum(BloodGroup)
+    blood_group!: string;
 
     @Column({ type: 'varchar', length: 25, nullable: true })
     @IsNotEmpty()
-    emergencyContact!: string;
+    emergency_contact!: string;
 
     @Column({ type: 'varchar', length: 500, nullable: true })
     address?: string;
 
     @Column({ type: 'varchar', length: 500, nullable: true })
-    profilePhotoUrl!: string | null;
+    profile_photo_url!: string | null;
 
     @Column({ type: 'mediumblob', nullable: true, select: false })
-    profilePhoto!: Buffer | null;
+    profile_photo!: Buffer | null;
 
     @Column({ default: false })
-    isEmailVerified!: boolean;
+    is_profile_exists!: boolean;
 
-    @Column({ default: false })
-    isProfileExists!: boolean;
+    @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+    created_at!: Date;
+
+    @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP', nullable: true })
+    updated_at: Date | null = null;
 
     @OneToMany(() => OtpEntity, (otp) => otp.user)
     otps!: OtpEntity[];

@@ -1,44 +1,41 @@
-import { Entity, PrimaryColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryColumn, Column, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { UserEntity } from './user.entity';
+import { IsNotEmpty } from 'class-validator';
+
 
 @Entity('Otps')
 export class OtpEntity {
-    @Column({ type: 'varchar', length: 36 })
-    otpId!: string;
+
+    @PrimaryColumn({ type: 'varchar', length: 300 })
+    @IsNotEmpty()
+    email!: string;
 
     @Column()
-    otpHash!: string;
+    otp_hash!: string;
 
+    @Column({ type: 'varchar', length: 36, name: 'user_id', nullable: true })
+    user_id!: string | null;
+
+    @Column({ type: 'int', unsigned: true, default: 0 })
+    resend_count = 0;
+
+    @Column({ type: 'datetime' })
+    daily_count_reset_at!: Date;
+
+    @Column({ type: 'int', unsigned: true, default: 0 })
+    daily_resend_count = 0;
+
+    @Column({ type: 'datetime' })
+    next_resend_at!: Date;
+
+    @CreateDateColumn({ type: 'datetime' })
+    created_at!: Date;
 
     @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-    createdAt!: Date;
+    expires_at!: Date;
 
-    @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP', nullable: true })
-    expiresAt: Date | null = null;
-
-    @Column({ type: 'datetime', nullable: true })
-    lastSentAt: Date | null = null;
-
-    @Column({ type: 'datetime', nullable: true })
-    sendWindowStartedAt: Date | null = null;
-
-    @Column({ type: 'int', unsigned: true, default: 0 })
-    sendCount = 0;
-
-    @Column({ type: 'datetime', nullable: true })
-    failureWindowStartedAt: Date | null = null;
-
-    @Column({ type: 'int', unsigned: true, default: 0 })
-    failedAttempts = 0;
-
-    @Column({ type: 'datetime', nullable: true })
-    lockedUntil: Date | null = null;
-
-    @PrimaryColumn({ type: 'varchar', length: 36 })
-    userId!: string;
-
-    @ManyToOne(() => UserEntity, (user) => user.otps, { onDelete: 'CASCADE' })
-    @JoinColumn({ name: 'userId' })
+    @ManyToOne(() => UserEntity, (user) => user.otps, { nullable: true, onDelete: 'CASCADE' })
+    @JoinColumn({ name: 'user_id' })
     user!: UserEntity;
 
 
