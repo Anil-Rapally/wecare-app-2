@@ -3,7 +3,7 @@ import{ IsString, IsNotEmpty,
    IsDateString, IsNumber,
     MaxLength, Matches,
   IsDefined } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 
 import { i18nValidationMessage } from 'nestjs-i18n';
 
@@ -123,6 +123,9 @@ export class UploadReportsDto {
   collection_id?: number;
 
   @IsOptional()
+  @Transform(({value})=>
+    value === ''? undefined: value
+  )
   @IsString({
     message: i18nValidationMessage(
       'validation.NEW_COLLECTION_NAME_STRING',

@@ -11,6 +11,8 @@ import { ResponseInterceptor } from './common/interceptors/Response.interceptor'
 import { ValidationExceptionFilter } from './common/filters/ValidationException.filter';
 import { HttpExceptionFilter } from './common/filters/HttpException.filter';
 import { ResponseExceptionFilter } from './common/filters/response.exceptions';
+import { ReportsModule } from './user/reports/reports.module';
+import { CollectionsModule } from './user/collections/collections.module';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -37,6 +39,18 @@ async function bootstrap(): Promise<void> {
   app.enableCors({ origin: config.getOrThrow<string>('CORS_ORIGIN') });
  
   app.enableShutdownHooks();
+
+  const Reports = new DocumentBuilder()
+    .setTitle('WeCare Reports & Collection ')
+    .setDescription('Uploading the reports ')
+    .setVersion('1.0')
+    .addTag('Reports-Feature')
+    .build()
+
+     const docDevA = SwaggerModule.createDocument(app, Reports, {
+    include: [ReportsModule, CollectionsModule], // only reports and controller modules 
+  });
+  SwaggerModule.setup('api/docs/reports', app, docDevA);
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('WeCare API')
