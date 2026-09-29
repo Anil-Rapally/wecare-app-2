@@ -6,9 +6,16 @@ import{ IsString, IsNotEmpty,
 import { Transform, Type } from 'class-transformer';
 
 import { i18nValidationMessage } from 'nestjs-i18n';
+import { ApiProperty,ApiPropertyOptional } from '@nestjs/swagger';
 
 export class UploadReportsDto {
 
+  @ApiProperty({
+    name: 'report_name',
+    type: 'string',
+    example: 'Blood Test Report',
+    description:' name of the report'
+  })
   @IsDefined({
     message: i18nValidationMessage('validation.REPORT_NAME_REQUIRED'),
   })
@@ -31,8 +38,15 @@ export class UploadReportsDto {
   @Matches(/[a-zA-Z]/,{
     message: i18nValidationMessage('validation.REPORT_NAME_TEXT')
   })
-  report_name!: string;
+  report_name: string;
 
+
+  @ApiProperty({
+    name: 'report_type',
+    type: 'string',
+    example: 'Blood Test Report',
+    description:' Type of the report'
+  })
    @IsDefined({
     message: i18nValidationMessage('validation.REPORT_TYPE_REQUIRED'),
   })
@@ -54,6 +68,12 @@ export class UploadReportsDto {
   })
   report_type!: string;
 
+  @ApiProperty({
+    name:'Date',
+    type:'string',
+    format:'date',
+    example:'2026-07-07'
+  })
   @IsNotEmpty({
     message: i18nValidationMessage('validation.REPORT_DATE_REQUIRED')
   })
@@ -62,6 +82,13 @@ export class UploadReportsDto {
   })
   report_date!: string;
 
+
+@ApiProperty({
+    name: 'Hospital_Or_Diagnostic_Center',
+    type: 'string',
+    example: 'Apollo Hospitals',
+    description:' name of the Hospital Or Diagnostic Center'
+  })
   @IsDefined({
     message: i18nValidationMessage('validation.HOSPITAL_REQUIRED'),
   })
@@ -82,6 +109,13 @@ export class UploadReportsDto {
   })
   Hospital_Or_Diagnostic_Center!: string;
 
+
+  @ApiProperty({
+    name: 'Doctor_name',
+    type: 'string',
+    example: 'Dr. Gowriprasad',
+    description:' name of the Hospital Or Diagnostic Center'
+  })
   @IsDefined({
     message: i18nValidationMessage('validation.DOCTOR_REQUIRED'),
   })
@@ -102,6 +136,13 @@ export class UploadReportsDto {
   })
   Doctor_name!: string;
 
+
+  @ApiPropertyOptional({
+    name: 'tags',
+    type: 'string',
+    example: 'blood,test,routine',
+    description:' name of the Tag'
+  })
   @IsOptional()
   @IsString({
     message: i18nValidationMessage('validation.TAGS_STRING'),
@@ -117,11 +158,24 @@ export class UploadReportsDto {
   })
   tags?: string;
 
+  @ApiPropertyOptional({
+    name: 'Collection_id',
+  type: 'number',
+    example: '1',
+    description:' Existing collection ID. Use this OR new_collection_name.  '
+  })
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
   collection_id?: number;
 
+
+  @ApiPropertyOptional({
+    name: 'new_collection_name',
+    type: 'string',
+    example: 'X-ray',
+    description:' New collection name'
+  })
   @IsOptional()
   @Transform(({value})=>
     value === ''? undefined: value

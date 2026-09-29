@@ -1,9 +1,16 @@
+import { IsOptional, IsString, Matches,
+         Min, IsInt, Max,  } from "class-validator";
 import { Type } from "class-transformer";
-import { IsOptional, IsString, Matches, Min, IsInt, Max, ValidationOptions, registerDecorator } from "class-validator";
+
 import { i18nValidationMessage } from "nestjs-i18n";
+import { ApiOperation, ApiPropertyOptional } from "@nestjs/swagger";
 
 export class ReportQueryDto{
-
+    @ApiPropertyOptional({
+        type: Number,
+        description: 'Page number',
+        example: 1,
+    })
     @IsOptional()
     @Type(()=> Number) 
     @Min(1,{
@@ -15,6 +22,11 @@ export class ReportQueryDto{
     page = 1;
 
 
+    @ApiPropertyOptional({
+        type: Number,
+        description: 'Number of reports per page',
+        example: 10,
+    })
     @IsOptional()
     @Type(()=> Number) 
     @Min(1,{
@@ -28,6 +40,12 @@ export class ReportQueryDto{
     })
     limit = 10;
 
+
+    @ApiPropertyOptional({
+        type: String,
+        description: 'Search Report name ',
+        example:'blood test',
+    })
 
     @IsOptional()
     @IsString({

@@ -6,7 +6,6 @@ import { Report } from '../entity/reports.entity';
 
 import { Collection } from '../entity/collection.entity';
 import { UploadReportsDto } from '../dto/upload.reports.dto';
-import { ReportQueryDto } from '../dto/reports.query.dto';
 
 import { ReportsPaginationConfig } from 'src/common/config/reports-pagination.config';
 import { paginate, Paginated, PaginateQuery } from 'nestjs-paginate';
