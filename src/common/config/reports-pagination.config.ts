@@ -4,9 +4,9 @@ import { Report } from "src/user/entity/reports.entity";
 export const ReportsPaginationConfig: PaginateConfig<Report>= {
 
     sortableColumns:[
+        'id',
+        'createdAt',
         'report_name',
-        'report_type',
-        'report_date',
     ],
 
     searchableColumns:[
@@ -16,12 +16,12 @@ export const ReportsPaginationConfig: PaginateConfig<Report>= {
     ],
     
       filterableColumns: {
-        report_type: true,
+        tags: true,
         report_date: true,
     },
 
     defaultSortBy:[
-        ['createdAt','DESC',]
+        ['id','DESC',]
     ],
 
     defaultLimit:10,
@@ -29,6 +29,21 @@ export const ReportsPaginationConfig: PaginateConfig<Report>= {
 
     relations:{
         collection:true,
-    }
+    },
+
+    select: [
+    'id',
+    'report_name',
+    'report_type',
+    'report_date',
+    'Hospital_Or_Diagnostic_Center',
+    'Doctor_name',
+    'tags',
+    'file_name',
+    'file_type',
+    'file_size',
+    'createdAt',
+    'updatedAt',
+  ],
 
 }

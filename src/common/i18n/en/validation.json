@@ -69,5 +69,8 @@
     "SELECT_ONE_COLLECTION":" Select an existing collection or create a new collection",
     "COLLECTION_NOT_FOUND":" Collection with ID {id} does not exist",
     "COLLECTION_REQUIRED":" Please select a collection or create a new collection",
-    "NO_REPORTS_AVAILABLE":" No report available "
+    "NO_REPORTS_AVAILABLE":" No report available ",
+
+    "REPORT_NOT_FOUND": "Report not found"
+
 }

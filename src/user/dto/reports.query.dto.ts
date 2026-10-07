@@ -1,9 +1,17 @@
 import { IsOptional, IsString, Matches,
-         Min, IsInt, Max,  } from "class-validator";
+         Min, IsInt, Max, IsEnum,
+         IsDateString
+        } from "class-validator";
 import { Type } from "class-transformer";
 
 import { i18nValidationMessage } from "nestjs-i18n";
-import { ApiOperation, ApiPropertyOptional } from "@nestjs/swagger";
+import {  ApiPropertyOptional } from "@nestjs/swagger";
+
+export enum ReportSort{
+    AZ = 'A-Z',
+    NEWEST = 'Newest',
+    OLDEST = 'Oldest'
+}   
 
 export class ReportQueryDto{
     @ApiPropertyOptional({
@@ -46,7 +54,6 @@ export class ReportQueryDto{
         description: 'Search Report name ',
         example:'blood test',
     })
-
     @IsOptional()
     @IsString({
         message: i18nValidationMessage('validation.SEARCH_STRING')
@@ -54,6 +61,43 @@ export class ReportQueryDto{
     @Matches(/[a-zA-Z]/,{
         message:i18nValidationMessage('validation.SEARCH_TEXT')
     })
-    search!: string;
+    search?: string;
 
+
+    @ApiPropertyOptional({
+        enum: ReportSort,
+        description: 'Sort reports ',
+    })
+    @IsOptional()
+    @IsEnum(ReportSort)
+    sort?: ReportSort;
+
+
+    @ApiPropertyOptional({
+        type: String,
+        description: 'Filter by tags',
+        example:'blood test',
+    })
+    @IsOptional()
+    @IsString()
+    tags?: string;
+
+    @ApiPropertyOptional({
+        type: String,
+        description: 'Filter by report date from',
+        example:'2023-01-01',
+    })
+    @IsOptional()
+    @IsDateString()
+    fromDate?: string;
+
+
+    @ApiPropertyOptional({
+        type: String,
+        description: 'Filter by report date to',
+        example:'2023-12-31',
+    })
+    @IsOptional()
+    @IsDateString()
+    toDate?: string;
 }

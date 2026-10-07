@@ -69,9 +69,8 @@ export class UploadReportsDto {
   report_type!: string;
 
   @ApiProperty({
-    name:'Date',
+    name:'report_date',
     type:'string',
-    format:'date',
     example:'2026-07-07'
   })
   @IsNotEmpty({
@@ -83,7 +82,7 @@ export class UploadReportsDto {
   report_date!: string;
 
 
-@ApiProperty({
+  @ApiProperty({
     name: 'Hospital_Or_Diagnostic_Center',
     type: 'string',
     example: 'Apollo Hospitals',
@@ -159,8 +158,8 @@ export class UploadReportsDto {
   tags?: string;
 
   @ApiPropertyOptional({
-    name: 'Collection_id',
-  type: 'number',
+    name: 'collection_id',
+    type: 'number',
     example: '1',
     description:' Existing collection ID. Use this OR new_collection_name.  '
   })

@@ -8,7 +8,7 @@ import { Collection } from '../entity/collection.entity';
 import { UploadReportsDto } from '../dto/upload.reports.dto';
 
 import { ReportsPaginationConfig } from 'src/common/config/reports-pagination.config';
-import { paginate, Paginated, PaginateQuery } from 'nestjs-paginate';
+import { paginate, Paginated, PaginateQuery, SortBy } from 'nestjs-paginate';
 
 import { I18nService } from 'nestjs-i18n';
 
@@ -33,17 +33,40 @@ export class ReportsService {
     
     ) {}
 
+// Fetch all reports with pagination, sorting, and filtering.
     async findAll(
             query: PaginateQuery,
         ): Promise<Paginated<Report>> {
 
-    return paginate(
-            query,
-            this.reportRepository,
-            ReportsPaginationConfig,
-        );
+            const result = await paginate(
+                query,
+                this.reportRepository,
+                ReportsPaginationConfig,
+            );
+
+        result.data = result.data.map((report) => ({
+            ...report,
+            viewUrl: `/reports/${report.id}/view`,
+        downloadUrl: `/reports/${report.id}/download`,
+        }));
+        return result;
     }
 
+// Fetch a report by its ID.
+     async findById(id: number): Promise<Report> {
+        const report = await this.reportRepository.findOne({
+            where: { id },
+        });
+         
+        if (!report) {
+            throw new NotFoundException(
+                this.i18n.translate('validation.REPORT_NOT_FOUND'),
+            );
+        }
+        return report;
+    }
+
+// Get the count of reports for a specific year and month.
     async getMonthlyCount(year: number, month?: number) {
         const query = this.reportRepository
         .createQueryBuilder('report')
@@ -105,9 +128,10 @@ export class ReportsService {
         };
     }
 
+// Save a new report along with its associated collection.
     async saveReport(
             file: Express.Multer.File,reportData: UploadReportsDto,
-    ): Promise<Report> {
+        ): Promise<Omit<Report, 'file_data'>> {
     
         if (!file) {
             throw new BadRequestException(
@@ -161,7 +185,7 @@ export class ReportsService {
 
         } else {
 
-        // if user havent selected any one of those.
+         // if user havent selected any one of those.
         throw new BadRequestException(
             this.i18n.translate('validation.COLLECTION_REQUIRED'),
         );
@@ -184,10 +208,13 @@ export class ReportsService {
             collection,
         });
 
-        return await this.reportRepository.save(report);
-    }
-}
+        const savedReport = await this.reportRepository.save(report);
 
+        const { file_data, ...reportResonse} = savedReport;
+        return reportResonse;
+    }
+
+}
 
 
 
