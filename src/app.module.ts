@@ -7,6 +7,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { I18nModule, AcceptLanguageResolver, I18nJsonLoader } from 'nestjs-i18n';
 import { join } from 'node:path';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { RedisModule } from './common/redis/redis.module';
+import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 
 @Module({
   imports: [UserModule,
@@ -20,14 +22,15 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       loader: I18nJsonLoader,
       loaderOptions: {
         path: join(__dirname, 'common', 'i18n'),
-        watch: true,
+        watch: false,
       },
       resolvers: [
         AcceptLanguageResolver,
       ],
     }),
+    RedisModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, ResponseInterceptor],
 })
 export class AppModule { }

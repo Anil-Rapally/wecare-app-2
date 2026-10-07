@@ -1,5 +1,5 @@
 import type { Request } from 'express';
-import type { UserEntity } from 'src/user/entity/user.entity';
+import type { UsersEntity } from 'src/user/entity/users.entity';
 
 export type TokenPurpose = 'signup' | 'access';
 
@@ -10,5 +10,5 @@ export interface AuthClaims {
 }
 
 export interface AuthenticatedRequest extends Request {
-  authUser: UserEntity;
+  authUser: UsersEntity;
 }

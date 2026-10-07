@@ -4,16 +4,18 @@ import {
   ArgumentsHost,
 } from '@nestjs/common';
 import { Response } from 'express';
-import { I18nValidationException } from 'nestjs-i18n';
+import { I18nService, I18nValidationException } from 'nestjs-i18n';
 
 @Catch(I18nValidationException)
 export class ValidationExceptionFilter implements ExceptionFilter<I18nValidationException> {
+  constructor(private readonly i18n: I18nService) {}
+
   catch(exception: I18nValidationException, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
-    const status = exception.getStatus(); 
+    const status = exception.getStatus();
     const errors = exception.errors ?? [];
-    let firstMessage = 'Validation failed';
+    let firstMessage = this.i18n.t('validation.validation_failed');
 
     for (const error of errors) {
       if (error.constraints) {
@@ -26,7 +28,7 @@ export class ValidationExceptionFilter implements ExceptionFilter<I18nValidation
     }
 
     response.status(status).json({
-      success: 5,
+      success: 0,
       message: firstMessage,
       data: null,
     });

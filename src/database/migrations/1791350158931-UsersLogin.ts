@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 import { Table, TableUnique } from "typeorm";
 
-export class UserLogin1789976838345 implements MigrationInterface {
+export class UsersLogin1791350158931 implements MigrationInterface {
 
 async up(queryRunner: QueryRunner): Promise<void> {
     const hasUsers = await queryRunner.hasTable('users');
@@ -13,7 +13,7 @@ async up(queryRunner: QueryRunner): Promise<void> {
     else {
       await queryRunner.createTable(
         new Table({
-          name: 'User',
+          name: 'Users',
           columns: [
             {
               name: 'id',
@@ -64,18 +64,11 @@ async up(queryRunner: QueryRunner): Promise<void> {
               isNullable: true,
             },
             {
-              name: 'profile_photo_url',
-              type: 'varchar',
-              length: '1000',
-              isNullable: true,
-            },
-            {
               name: 'profile_photo',
               type: 'mediumblob',
               isNullable: true,
             },
-            {
-              
+            {              
               name: 'is_profile_exists',
               type: 'tinyint',
               isNullable: false,
@@ -94,7 +87,7 @@ async up(queryRunner: QueryRunner): Promise<void> {
           ],
           uniques: [
             new TableUnique({
-              name: 'UQ_users_email',
+              name: 'Unique_users_email',
               columnNames: ['email'],
             }),
           ],
@@ -105,7 +98,7 @@ async up(queryRunner: QueryRunner): Promise<void> {
   }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.dropTable('User');
+        await queryRunner.dropTable('Users');
     }
 
 }

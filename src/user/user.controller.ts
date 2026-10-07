@@ -1,9 +1,7 @@
 import { UserService } from './user.service';
 import { LoginDto } from './dto/login.dto';
-import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { CreateUserDto } from './dto/create_user.dto';
 import { AuthGuard, RequirePurpose } from '../common/guards/auth.guard';
-import { max_photo_bytes } from './photo/photo.service';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -15,10 +13,13 @@ import {
 } from '@nestjs/swagger';
 import {
   Body,
+  BadRequestException,
   Controller,
+  FileTypeValidator,
   Get,
   Header,
   HttpCode,
+  MaxFileSizeValidator,
   ParseFilePipe,
   Post,
   StreamableFile,
@@ -28,7 +29,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
-import { UserEntity } from './entity/user.entity';
+import { UsersEntity } from './entity/users.entity';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 
 @ApiTags('User')
@@ -36,15 +37,23 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 export class UserController {
   constructor(private readonly userService: UserService) { }
 
-  @ApiOperation({ summary: 'Request an email OTP' })
+  @ApiOperation({
+    summary: `If only email is provided, an OTP will be generated and sent.
+     If both email and OTP are provided, the OTP will be verified.` })
   @ApiBody({ type: LoginDto })
   @ApiResponse({
     status: 200,
-    description: 'OTP sent successfully',
+    description: `OTP sent successfully if only email is provided; 
+    OTP verified if both email and OTP are provided`,
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Invalid, expired, or already-used OTP',
   })
   @ApiResponse({
     status: 429,
-    description: 'Too many login or OTP requests',
+    description: `Too many login or OTP requests if only email is provided;
+    Too many OTP verification attempts if both email and OTP are provided`,
   })
   @ApiResponse({
     status: 503,
@@ -57,26 +66,6 @@ export class UserController {
     return this.userService.login(loginDto);
   }
 
-  @ApiOperation({ summary: 'Verify an email OTP' })
-  @ApiBody({ type: VerifyOtpDto })
-  @ApiResponse({
-    status: 200,
-    description: 'OTP verified; returns either a signup token or access token',
-  })
-  @ApiResponse({
-    status: 401,
-    description: 'Invalid, expired, or already-used OTP',
-  })
-  @ApiResponse({
-    status: 429,
-    description: 'Too many verification attempts',
-  })
-  @Post('verifyotp')
-  @HttpCode(200)
-  @Header('Cache-Control', 'no-store')
-  verifyOtp(@Body() verifyOtpDto: VerifyOtpDto) {
-    return this.userService.verifyOtp(verifyOtpDto);
-  }
 
   @ApiOperation({ summary: 'Complete new-user registration' })
   @ApiBearerAuth('access-token')
@@ -97,9 +86,11 @@ export class UserController {
   @Header('Cache-Control', 'no-store')
   @UseGuards(AuthGuard)
   @RequirePurpose('signup')
-  signup(@CurrentUser() user: UserEntity, @Body() dto: CreateUserDto) {
+  signup(@CurrentUser() user: UsersEntity, @Body() dto: CreateUserDto) {
     return this.userService.createUser(user.id, dto);
   }
+
+
 
   @ApiOperation({ summary: 'Upload or replace the profile photo' })
   @ApiBearerAuth('access-token')
@@ -111,7 +102,7 @@ export class UserController {
         file: {
           type: 'string',
           format: 'binary',
-          description: 'JPEG, PNG, or WebP image up to 2 MiB',
+          description: 'JPEG, PNG, or WebP image up to 2 MB',
         },
       },
       required: ['file'],
@@ -137,15 +128,40 @@ export class UserController {
   @UseInterceptors(
     FileInterceptor('file', {
       storage: memoryStorage(),
-      limits: { fileSize: max_photo_bytes, files: 1, fields: 0 },
+      limits: { files: 1, fields: 0, fileSize: 2 * 1024 * 1024 },
     }),
   )
   uploadPhoto(
-    @CurrentUser() user: UserEntity,
-    @UploadedFile(new ParseFilePipe({ fileIsRequired: true })) file: Express.Multer.File,
+    @CurrentUser() user: UsersEntity,
+    @UploadedFile(
+      new ParseFilePipe({
+        fileIsRequired: true,
+        exceptionFactory: (message) =>
+          new BadRequestException({
+            message:
+              message === 'File is required'
+                ? 'validation.upload_photo_required'
+                : message,
+          }),
+        validators: [
+          new MaxFileSizeValidator({
+            maxSize: 2 * 1024 * 1024,
+            message: 'validation.upload_photo_size',
+          }),
+          new FileTypeValidator({
+            fileType: /^image\/(jpeg|png|webp)$/,
+            errorMessage: 'validation.upload_photo_format',
+          }),
+        ],
+      }),
+    )
+    file: Express.Multer.File,
   ) {
     return this.userService.uploadProfilePhoto(user.id, file);
   }
+
+
+
 
   @ApiOperation({ summary: 'Get the authenticated user profile' })
   @ApiBearerAuth('access-token')
@@ -161,11 +177,16 @@ export class UserController {
   @Header('Cache-Control', 'no-store')
   @UseGuards(AuthGuard)
   @RequirePurpose('access')
-  getProfile(@CurrentUser() user: UserEntity) {
+  getProfile(@CurrentUser() user: UsersEntity) {
     return {
+      message: 'validation.profile_retrieved',
       ...this.userService.publicUser(user),
     };
   }
+
+
+
+
 
   @ApiOperation({ summary: 'Get the authenticated user profile photo' })
   @ApiBearerAuth('access-token')
@@ -195,7 +216,7 @@ export class UserController {
   @Header('X-Content-Type-Options', 'nosniff')
   @UseGuards(AuthGuard)
   @RequirePurpose('access')
-  async getPhoto(@CurrentUser() user: UserEntity) {
+  async getPhoto(@CurrentUser() user: UsersEntity) {
     return new StreamableFile(await this.userService.getProfilePhoto(user.id), {
       type: 'image/jpeg',
       disposition: 'inline; filename="profile.jpg"',

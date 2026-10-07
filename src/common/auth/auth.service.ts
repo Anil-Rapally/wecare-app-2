@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { isUUID } from 'class-validator';
-import { UserEntity } from 'src/user/entity/user.entity';
+import { UsersEntity } from 'src/user/entity/users.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import type { AuthClaims, TokenPurpose } from './auth.type';
@@ -14,13 +14,13 @@ export class AuthService {
         private readonly jwt: JwtService,
         private readonly config: ConfigService,
         private readonly i18n : I18nService,
-        @InjectRepository(UserEntity) private readonly userRepository: Repository<UserEntity>,
+        @InjectRepository(UsersEntity) private readonly userRepository: Repository<UsersEntity>,
     ) { }
 
     async issue_jwt(email: string, purpose: TokenPurpose) {
         const user = await this.userRepository.findOne ({ where: {email}});
         if (!user) {
-            throw new UnauthorizedException(this.i18n.t('validation.user_not_found'));
+            throw new UnauthorizedException({message: 'validation.user_not_found'});
         }
         const user_id = user.id;
         const expires_in = 300;
@@ -42,10 +42,10 @@ export class AuthService {
                 algorithms: ['HS256'],
             });
             if (!claims || !isUUID(claims.sub, '4') || !['signup', 'access'].includes(claims.purpose) || !claims.exp)
-                throw new Error(this.i18n.t('validation.invalid_clams'));
+                throw new Error( 'validation.invalid_claims');
             return claims;
         } catch {
-            throw new UnauthorizedException(this.i18n.t('validation.expired_token'));
+            throw new UnauthorizedException({message: 'validation.expired_token'});
         }
     }
 }

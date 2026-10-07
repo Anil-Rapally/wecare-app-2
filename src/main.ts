@@ -1,5 +1,4 @@
 import 'reflect-metadata';
-import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
@@ -10,6 +9,7 @@ import { I18nValidationPipe } from 'nestjs-i18n';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { ValidationExceptionFilter } from './common/filters/validation_exception.filter';
 import { HttpExceptionFilter } from './common/filters/http_exception.filter';
+import { I18nService } from 'nestjs-i18n';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -22,19 +22,15 @@ async function bootstrap(): Promise<void> {
   );
 
 
-  app.useGlobalFilters(new HttpExceptionFilter(), new ValidationExceptionFilter());
-  app.useGlobalInterceptors(new ResponseInterceptor());
+  const i18n = app.get(I18nService);
+  app.useGlobalFilters(
+    new HttpExceptionFilter(i18n),
+    new ValidationExceptionFilter(i18n),
+  );
+  app.useGlobalInterceptors(app.get(ResponseInterceptor));
   const config = app.get(ConfigService);
   app.use(helmet());
   app.enableCors({ origin: config.getOrThrow<string>('CORS_ORIGIN') });
-  app.useGlobalPipes(
-    new ValidationPipe({
-      transform: true,
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transformOptions: { enableImplicitConversion: false },
-    }),
-  );
   app.enableShutdownHooks();
 
   const swaggerConfig = new DocumentBuilder()

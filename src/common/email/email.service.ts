@@ -27,7 +27,6 @@ export class EmailService implements OnModuleDestroy {
   }
 
   async sendOtp(email: string, otp: string): Promise<void> {
-    // Never log the code or put it in the HTTP response.
     const result = await this.transporter.sendMail({
       from: this.config.getOrThrow<string>('SMTP_FROM'),
       to: email,
