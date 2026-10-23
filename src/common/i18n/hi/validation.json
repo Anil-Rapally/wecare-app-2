@@ -12,6 +12,8 @@
   "valid_blood_group": "एक मान्य ब्लड ग्रुप दर्ज करें",
   "enter_emergency_contact": "कृपया आपातकालीन संपर्क नंबर दर्ज करें",
   "valid_emergency_contact": "एक मान्य आपातकालीन संपर्क नंबर दर्ज करें",
+  "invalid_input": "अमान्य इनपुट",
+  "valid_phone_number": "कृपया एक मान्य फोन नंबर दर्ज करें।",
   "address_invalid": "कृपया मान्य पता दर्ज करें।",
   "address_too_long": "पता 500 अक्षरों से अधिक नहीं हो सकता।",
   "upload_photo_size": "कृपया 2 MiB से बड़ी इमेज अपलोड न करें।",

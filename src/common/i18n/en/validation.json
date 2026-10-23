@@ -12,6 +12,8 @@
     "valid_blood_group": "Enter a valid blood group",
     "enter_emergency_contact": "Please enter emergency contact number",
     "valid_emergency_contact": "Enter a valid emergency contact number",
+    "valid_phone_number": "Enter a valid phone number.",
+    "invalid_input": "Invalid input",
     "address_invalid": "Enter a valid address.",
     "address_too_long": "Address cannot exceed 500 characters.",
     "upload_photo_size": "Upload an image no larger than 2 MiB.",

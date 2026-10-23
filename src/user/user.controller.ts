@@ -38,13 +38,13 @@ export class UserController {
   constructor(private readonly userService: UserService) { }
 
   @ApiOperation({
-    summary: `If only email is provided, an OTP will be generated and sent.
-     If both email and OTP are provided, the OTP will be verified.` })
+    summary: `If only email or phone number is provided, an OTP will be generated and sent.
+     If both email/phone number and OTP are provided, the OTP will be verified.` })
   @ApiBody({ type: LoginDto })
   @ApiResponse({
     status: 200,
-    description: `OTP sent successfully if only email is provided; 
-    OTP verified if both email and OTP are provided`,
+    description: `OTP sent successfully if only email or phone number is provided; 
+    OTP verified if both email/phone number and OTP are provided`,
   })
   @ApiResponse({
     status: 401,
@@ -52,8 +52,8 @@ export class UserController {
   })
   @ApiResponse({
     status: 429,
-    description: `Too many login or OTP requests if only email is provided;
-    Too many OTP verification attempts if both email and OTP are provided`,
+    description: `Too many login or OTP requests if only email or phone number is provided;
+    Too many OTP verification attempts if both email/phone number  and OTP are provided`,
   })
   @ApiResponse({
     status: 503,
@@ -65,6 +65,8 @@ export class UserController {
   login(@Body() loginDto: LoginDto) {
     return this.userService.login(loginDto);
   }
+
+
 
 
   @ApiOperation({ summary: 'Complete new-user registration' })

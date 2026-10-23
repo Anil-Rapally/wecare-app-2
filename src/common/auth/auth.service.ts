@@ -17,8 +17,8 @@ export class AuthService {
         @InjectRepository(UsersEntity) private readonly userRepository: Repository<UsersEntity>,
     ) { }
 
-    async issue_jwt(email: string, purpose: TokenPurpose) {
-        const user = await this.userRepository.findOne ({ where: {email}});
+    async issue_jwt(userId: string, purpose: TokenPurpose) {
+        const user = await this.userRepository.findOne({ where: { id: userId } });
         if (!user) {
             throw new UnauthorizedException({message: 'validation.user_not_found'});
         }

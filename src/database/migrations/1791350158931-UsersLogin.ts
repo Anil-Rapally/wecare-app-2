@@ -26,7 +26,13 @@ async up(queryRunner: QueryRunner): Promise<void> {
               name: 'email',
               type: 'varchar',
               length: '300',
-              isNullable: false,
+              isNullable: true,
+            },
+            {
+              name: 'phone_number',
+              type: 'varchar',
+              length: '20',
+              isNullable: true,
             },
             {
               name: 'full_name',
@@ -89,6 +95,10 @@ async up(queryRunner: QueryRunner): Promise<void> {
             new TableUnique({
               name: 'Unique_users_email',
               columnNames: ['email'],
+            }),
+            new TableUnique({
+              name: 'Unique_users_phone_number',
+              columnNames: ['phone_number'],
             }),
           ],
         }),

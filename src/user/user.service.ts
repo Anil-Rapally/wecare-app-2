@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { LoginDto } from './dto/login.dto';
 import { UsersEntity } from './entity/users.entity';
 import { Repository } from 'typeorm';
@@ -21,28 +21,37 @@ export class UserService {
     ) { }
 
     async login(login_dto: LoginDto) {
+        const value = login_dto.email || login_dto.phone_number;
+        if (!value || (login_dto.email && login_dto.phone_number)) {
+            throw new BadRequestException('Provide either an email or phone number');
+        }
         if (!login_dto.otp) {
-            await this.optService.generateOtp(login_dto.email);
+            await this.optService.generateOtp(value);
             return {
                 message: 'validation.otp_sent_successfully',
             };
         }
 
-        const verification = await this.optService.verifyOtp(login_dto.email, login_dto.otp);
+        const verification = await this.optService.verifyOtp(value, login_dto.otp,);
         if (!verification.verified) {
             throw new UnauthorizedException({ message: verification.message });
         }
 
-        let user = await this.userRepository.findOne({ where: { email: login_dto.email } });
+        const where = login_dto.email
+            ? { email: value }
+            : { phone_number: value };
+
+        let user = await this.userRepository.findOne({ where });
         if (!user) {
             user = this.userRepository.create({
                 email: login_dto.email,
+                phone_number: login_dto.phone_number,
                 is_profile_exists: false,
             });
             user = await this.userRepository.save(user);
         }
         if (user.is_profile_exists) {
-            const issued = await this.authService.issue_jwt(user.email, 'access');
+            const issued = await this.authService.issue_jwt(user.id, 'access');
             return {
                 access_token: issued.token,
                 token_type: 'Bearer',
@@ -51,13 +60,13 @@ export class UserService {
                 nextStep: 'dashboard' as const,
             };
         }
-        const issued = await this.authService.issue_jwt(user.email, 'signup');
+        const issued = await this.authService.issue_jwt(user.id, 'signup');
         return {
             signup_token: issued.token,
             token_type: 'Bearer',
             expires_in: issued.expires_in,
             message: 'validation.otp_verified',
-            nextStep: 'userprofile' as const,
+            nextStep: 'setupprofile' as const,
         };
     }
 
@@ -79,7 +88,7 @@ export class UserService {
 
         await this.userRepository.save(user);
 
-        const issued = await this.authService.issue_jwt(user.email, 'access');
+        const issued = await this.authService.issue_jwt(user.id, 'access');
         return {
             message: 'validation.profile_created',
             is_profile_exists: user.is_profile_exists,
@@ -114,6 +123,7 @@ export class UserService {
         return {
             id: user.id,
             email: user.email,
+            phone_number: user.phone_number,
             full_name: user.full_name,
             date_of_birth: user.date_of_birth,
             gender: user.gender,

@@ -20,15 +20,18 @@ export enum BloodGroup{
 
 @Entity('Users')
 @Unique(['email'])
+@Unique(['phone_number'])
 export class UsersEntity {
 
     @PrimaryGeneratedColumn('uuid')
     @IsNotEmpty()
     id: string;
 
-    @Column({ type: 'varchar', length: 300, nullable: false })
-    @IsNotEmpty()
-    email: string;
+    @Column({ type: 'varchar', length: 300, nullable: true })
+    email: string | null;
+
+    @Column({ type: 'varchar', length: 20, nullable: true })
+    phone_number: string | null;
 
     @Column({ type: 'varchar', length: 200, nullable: false })
     @IsNotEmpty()
@@ -67,4 +70,3 @@ export class UsersEntity {
     updated_at: Date | null = null;
 
 }
-

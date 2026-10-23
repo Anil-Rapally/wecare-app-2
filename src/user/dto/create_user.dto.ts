@@ -11,6 +11,8 @@ const getMinAgeLimit = () => {
 
 export class CreateUserDto {
 
+    
+
     @ApiProperty({ example: "UserName" })
     @Transform(({ value }) => typeof value === 'string' ? value.trim() : value)
     @IsNotEmpty({ message:'validation.enter_name' })
