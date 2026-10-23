@@ -164,47 +164,6 @@ export class ReportsController {
         return this.reportsService.saveReport(file, body);
     }
 
-    // View the uploaded report file in the browser.
-
-    @Get('view/:id')
-    @ApiOperation({
-        summary: 'View uploaded report',
-        description: 'Report ID.',
-    })
-    @ApiParam({
-        name: 'id',
-        type: Number,
-        example: 1,
-        description: 'ID of the report to view',
-    })
-    @ApiResponse({
-        status: 200,
-        description: 'Report file returned successfully.',
-    })
-    @ApiResponse({
-        status: 400,
-        description: 'Invalid report ID.',
-    })
-    @ApiResponse({
-        status: 404,
-        description: 'Report not found.',
-    })
-    async viewReportFile(
-        @Param('id', ParseIntPipe) id: number,
-        @Res() res: Response,
-    ) {
-        const report = await this.reportsService.findById(id);
-
-        res.setHeader('Content-Type', report.file_type);
-
-        res.setHeader(
-            'Content-Disposition',
-            `inline; filename="${encodeURIComponent(report.file_name)}"`,
-        );
-
-        res.send(report.file_data);
-    }
-
     // Download the uploaded report file as an attachment.
 
     @Get('download/:id')
@@ -308,7 +267,7 @@ export class ReportsController {
         return this.reportsService.replaceReportFile(id, file);
     }
 
-// Update the details of an existing medical report.
+    // Update the details of an existing medical report.
 
     @Patch(':id')
     @ApiOperation({
@@ -373,22 +332,22 @@ export class ReportsController {
         return await this.reportsService.addReportToCollections(id, addReportToCollectionsDto.collection_ids);
     }
 
-// add reports   to Archive 
+    // add reports   to Archive 
     @Patch(':id/archive')
     @ApiOperation({
-         summary: 'Archive a report by ID' 
+        summary: 'Archive a report by ID'
     })
     @ApiParam({
         name: 'id',
-        type: Number, 
-        description: 'Report ID' 
+        type: Number,
+        description: 'Report ID'
     })
     @ApiResponse({
-        status: 200, 
-        description: 'Report archived successfully' 
+        status: 200,
+        description: 'Report archived successfully'
     })
     @ApiResponse({
-        status: 404, description: 'Report not found' 
+        status: 404, description: 'Report not found'
     })
     async archiveReport(
         @Param('id', ParseIntPipe) id: number,
@@ -400,6 +359,30 @@ export class ReportsController {
         };
     }
 
+// Get details of the report 
+    @Get(':id/details')
+    @ApiOperation({
+        summary: 'Get report details and collections',
+    })
+    @ApiParam({
+        name: 'id',
+        type: Number,
+        example: 1,
+        description: 'ID of the report',
+    })
+    @ApiResponse({
+        status: 200,
+        description: 'Report details retrieved successfully.',
+    })
+    @ApiResponse({
+        status: 404,
+        description: 'Report not found.',
+    })
+    async getReportDetails(
+        @Param('id', ParseIntPipe) id: number,
+    ) {
+        return this.reportsService.getReportDetails(id);
+    }
 
 
 }

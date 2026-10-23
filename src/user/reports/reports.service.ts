@@ -58,7 +58,6 @@ export class ReportsService {
                 return {
                     ...report,
                     collections: fullReport?.collections ?? [],
-                    view_url: `/reports/view/${report.id}`,
                     download_url: `/reports/download/${report.id}`,
                 };
             }),
@@ -79,6 +78,38 @@ export class ReportsService {
             );
         }
         return report;
+    }
+
+    // Get report details 
+    async getReportDetails(id: number) {
+        const report = await this.reportRepository.findOne({
+            where: { id },
+            relations: {
+                collections: true,
+            },
+        });
+
+        if (!report) {
+            throw new NotFoundException(
+                this.i18n.translate('validation.REPORT_NOT_FOUND'),
+            );
+        }
+
+        return {
+            report_name: report.report_name,
+            uploaded_on: report.createdAt,
+            hospital: report.Hospital_Or_Diagnostic_Center,
+            doctor_name: report.Doctor_name,
+
+            collections: report.collections.map((collection) => ({
+                name: collection.name,
+                updatedAt: collection.updatedAt,
+            })),
+
+            // file_type: report.file_type,
+            // file_name: report.file_name,
+            file_data: report.file_data.toString('base64'),
+        };
     }
 
     // Get the count of reports for a specific year and month.
