@@ -1,12 +1,14 @@
-import{ IsString, IsNotEmpty,
+import {
+  IsString, IsNotEmpty,
   MinLength, IsOptional,
-   IsDateString, IsNumber,
-    MaxLength, Matches,
-  IsDefined } from 'class-validator';
+  IsDateString, IsNumber,
+  MaxLength, Matches,
+  IsDefined
+} from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 
 import { i18nValidationMessage } from 'nestjs-i18n';
-import { ApiProperty,ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class UploadReportsDto {
 
@@ -14,28 +16,24 @@ export class UploadReportsDto {
     name: 'report_name',
     type: 'string',
     example: 'Blood Test Report',
-    description:' name of the report'
+    description: ' name of the report'
   })
   @IsDefined({
     message: i18nValidationMessage('validation.REPORT_NAME_REQUIRED'),
   })
-
- @IsNotEmpty({
+  @IsNotEmpty({
     message: i18nValidationMessage('validation.REPORT_NAME_REQUIRED')
   })
   @IsString({
     message: i18nValidationMessage('validation.REPORT_NAME_STRING')
   })
-
-  @MinLength(2,{
+  @MinLength(2, {
     message: i18nValidationMessage('validation.REPORT_NAME_MIN')
   })
- 
-  @MaxLength(40,{
+  @MaxLength(40, {
     message: i18nValidationMessage('validation.REPORT_NAME_MAX')
   })
-  
-  @Matches(/[a-zA-Z]/,{
+  @Matches(/[a-zA-Z]/, {
     message: i18nValidationMessage('validation.REPORT_NAME_TEXT')
   })
   report_name: string;
@@ -45,9 +43,9 @@ export class UploadReportsDto {
     name: 'report_type',
     type: 'string',
     example: 'Blood Test Report',
-    description:' Type of the report'
+    description: ' Type of the report'
   })
-   @IsDefined({
+  @IsDefined({
     message: i18nValidationMessage('validation.REPORT_TYPE_REQUIRED'),
   })
   @IsNotEmpty({
@@ -56,27 +54,26 @@ export class UploadReportsDto {
   @IsString({
     message: i18nValidationMessage('validation.REPORT_TYPE_STRING')
   })
-  @MinLength(2,{
+  @MinLength(2, {
     message: i18nValidationMessage('validation.REPORT_TYPE_MIN')
   })
-  @MaxLength(40,{
+  @MaxLength(40, {
     message: i18nValidationMessage('validation.REPORT_TYPE_MAX')
   })
-  
-  @Matches(/[a-zA-Z]/,{
+  @Matches(/[a-zA-Z]/, {
     message: i18nValidationMessage('validation.REPORT_TYPE_TEXT')
   })
   report_type!: string;
 
   @ApiProperty({
-    name:'report_date',
-    type:'string',
-    example:'2026-07-07'
+    name: 'report_date',
+    type: 'string',
+    example: '2026-07-07'
   })
   @IsNotEmpty({
     message: i18nValidationMessage('validation.REPORT_DATE_REQUIRED')
   })
-  @IsDateString({},{
+  @IsDateString({}, {
     message: i18nValidationMessage('validation.REPORT_DATE_INVALID')
   })
   report_date!: string;
@@ -86,7 +83,7 @@ export class UploadReportsDto {
     name: 'Hospital_Or_Diagnostic_Center',
     type: 'string',
     example: 'Apollo Hospitals',
-    description:' name of the Hospital Or Diagnostic Center'
+    description: ' name of the Hospital Or Diagnostic Center'
   })
   @IsDefined({
     message: i18nValidationMessage('validation.HOSPITAL_REQUIRED'),
@@ -113,7 +110,7 @@ export class UploadReportsDto {
     name: 'Doctor_name',
     type: 'string',
     example: 'Dr. Gowriprasad',
-    description:' name of the Hospital Or Diagnostic Center'
+    description: ' name of the Doctor '
   })
   @IsDefined({
     message: i18nValidationMessage('validation.DOCTOR_REQUIRED'),
@@ -140,7 +137,7 @@ export class UploadReportsDto {
     name: 'tags',
     type: 'string',
     example: 'blood,test,routine',
-    description:' name of the Tag'
+    description: ' name of the Tag'
   })
   @IsOptional()
   @IsString({
@@ -161,7 +158,7 @@ export class UploadReportsDto {
     name: 'collection_id',
     type: 'number',
     example: '1',
-    description:' Existing collection ID. Use this OR new_collection_name.  '
+    description: ' Existing collection ID. Use this OR new_collection_name.  '
   })
   @IsOptional()
   @Type(() => Number)
@@ -173,11 +170,11 @@ export class UploadReportsDto {
     name: 'new_collection_name',
     type: 'string',
     example: 'X-ray',
-    description:' New collection name'
+    description: ' New collection name'
   })
   @IsOptional()
-  @Transform(({value})=>
-    value === ''? undefined: value
+  @Transform(({ value }) =>
+    value === '' ? undefined : value
   )
   @IsString({
     message: i18nValidationMessage(

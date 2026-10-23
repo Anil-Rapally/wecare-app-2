@@ -1,6 +1,6 @@
 import { Body, Controller, FileTypeValidator,
         Get, MaxFileSizeValidator, Param, ParseFilePipe,
-        ParseIntPipe, Post, Query, Res, UploadedFile, UseInterceptors,
+        ParseIntPipe, Patch, Post, Query, Res, UploadedFile, UseInterceptors,
        } from '@nestjs/common';
 
 import { ReportsService } from './reports.service';
@@ -15,12 +15,14 @@ import type { Paginated, PaginateQuery } from 'nestjs-paginate';
 import { MonthlyReportQueryDto } from '../dto/monthly.report.query.dto';
 import { ReportQueryDto, ReportSort } from '../dto/reports.query.dto';
 import { ApiTags, ApiOperation, ApiExtraModels, ApiResponse, ApiConsumes,ApiBody, getSchemaPath, ApiParam } from '@nestjs/swagger';
+import { UpdateReportDto } from '../dto/update.report.dto';
+import { AddReportToCollectionsDto } from '../dto/add-report-to-collections.dto';
 
 
 @ApiTags('Reports-Feature')
 @Controller('reports')
 export class ReportsController {
-    
+
     constructor(private reportsService: ReportsService) {}
 
 // Fetch all reports with pagination, sorting, and filtering.
@@ -74,12 +76,18 @@ export class ReportsController {
 
 // Get the count of reports for a specific year and month.
     @Get('monthly-count')
-    @ApiOperation({ summary: 'Get reports by Monthly count',
+    @ApiOperation({
+        summary: 'Get reports by Monthly count',
         description:'Get reports grouped by months for a specific year, or retrieve reports for a specific month'
-     })
-    @ApiResponse({status:200, description:' Reports data retrieved succesfully.'})
-    @ApiResponse({status:400, description:'Invalid year or month'})
-      
+    })
+    @ApiResponse({
+        status:200,
+        description:' Reports data retrieved succesfully.'
+    })
+    @ApiResponse({
+        status:400,
+        description:'Invalid year or month'
+    })
     async getMonthlyCount(
         @Query() query: MonthlyReportQueryDto,
     ){
@@ -91,7 +99,7 @@ export class ReportsController {
 
 // Upload a new report along with its associated collection.
     @ApiExtraModels(UploadReportsDto)
-    @Post()
+    @Post('Upload')
     @ApiOperation({
         summary: 'Upload medical report',
         description:
@@ -154,7 +162,7 @@ export class ReportsController {
     ) {
         return this.reportsService.saveReport(file, body);
     }
-    
+
 // View the uploaded report file in the browser.
     @Get('view/:id')
     @ApiOperation({
@@ -195,7 +203,7 @@ export class ReportsController {
         res.send(report.file_data);
     }
 
-    // Download the uploaded report file as an attachment.
+// Download the uploaded report file as an attachment.
 
     @Get('download/:id')
     @ApiOperation({
@@ -235,5 +243,133 @@ export class ReportsController {
 
         res.send(report.file_data);
     }
+
+// Replace the file attached to an existing medical report.
+
+    @Patch(':id/file')
+    @ApiOperation({
+        summary: 'Replace report file',
+        description: 'Replace the file attached to an existing medical report.',
+    })
+    @ApiParam({
+        name: 'id',
+        type: Number,
+        example: 1,
+        description: 'ID of the report whose file should be replaced',
+    })
+    @ApiConsumes('multipart/form-data')
+    @ApiBody({
+        schema: {
+            type: 'object',
+            properties: {
+                file: {
+                    type: 'string',
+                    format: 'binary',
+                    description: 'PDF, JPG, JPEG or PNG file. Maximum size: 25MB.',
+                },
+            },
+            required: ['file'],
+        },
+    })
+    @ApiResponse({
+        status: 200,
+        description: 'Report file replaced successfully.',
+    })
+    @ApiResponse({
+        status: 400,
+        description: 'Invalid report ID or file.',
+    })
+    @ApiResponse({
+        status: 404,
+        description: 'Report not found.',
+    })
+    @UseInterceptors(FileInterceptor('file'))
+    replaceReportFile(
+        @Param('id', ParseIntPipe) id: number,
+        @UploadedFile(
+            new ParseFilePipe({
+                validators: [
+                    new MaxFileSizeValidator({
+                        maxSize: 1024 * 1024 * 25,
+                        message: 'File is too large! Maximum allowed size is 25MB',
+                    }),
+                    new FileTypeValidator({
+                        fileType: '.(jpg|jpeg|png|pdf)',
+                        errorMessage:
+                            'Invalid file format, only JPG, JPEG, PNG and PDF are allowed',
+                    }),
+                ],
+            }),
+        )
+        file: Express.Multer.File,
+    ) {
+        return this.reportsService.replaceReportFile(id, file);
+    }
+
+// Update the details of an existing medical report.
+
+    @Patch(':id')
+    @ApiOperation({
+        summary: 'Update report details',
+        description: 'Update the details of an existing medical report.',
+    })
+    @ApiParam({
+        name: 'id',
+        type: Number,
+        example: 1,
+        description: 'ID of the report to update',
+    })
+    @ApiResponse({
+        status: 200,
+        description: 'Report details updated successfully.',
+    })
+    @ApiResponse({
+        status: 400,
+        description: 'Invalid report ID or report details.',
+    })
+    @ApiResponse({
+        status: 404,
+        description: 'Report not found.',
+    })
+    async updateReport(
+        @Param('id', ParseIntPipe) id: number,
+        @Body() updateReportDto: UpdateReportDto
+    ) {
+        return await this.reportsService.updateReport(id, updateReportDto);
+    }
+
+
+// Add a report to one or more collections.
+
+    @Post(':id/collections')
+    @ApiOperation({
+        summary: 'Add report to collections',
+        description: 'Add a report to one or more collections.',
+    })
+    @ApiParam({
+        name: 'id',
+        type: Number,
+        example: 1,
+        description: 'ID of the report to add to collections',
+    })
+    @ApiResponse({
+        status: 200,
+        description: 'Report added to collections successfully.',
+    })
+    @ApiResponse({
+        status: 400,
+        description: 'Invalid report ID or collection IDs.',
+    })
+    @ApiResponse({
+        status: 404,
+        description: 'Report or collections not found.',
+    })
+    async addToCollections(
+        @Param('id', ParseIntPipe) id: number,
+        @Body() addReportToCollectionsDto: AddReportToCollectionsDto,) {
+
+        return await this.reportsService.addReportToCollections(id, addReportToCollectionsDto.collection_ids);
+    }
+
 
 }

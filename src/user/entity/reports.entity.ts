@@ -1,4 +1,12 @@
-import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  JoinTable,
+  ManyToMany,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn
+} from "typeorm";
 import { Collection } from "./collection.entity";
 
 @Entity("report")
@@ -12,7 +20,7 @@ export class Report {
   @Column()
   report_type!: string;
 
-  @Column({type:'date'})
+  @Column({ type: 'date' })
   report_date!: Date;
 
   @Column()
@@ -33,17 +41,33 @@ export class Report {
   @Column()
   file_size!: number;
 
-  @Column({type:'longblob'})
+  @Column({ type: 'longblob' })
   file_data!: Buffer;
 
-  @ManyToOne(() => Collection, (collection) => collection.reports,{nullable:true})
-  @JoinColumn({ name: "collection_id" })
-  collection!: Collection;
-  
+  @ManyToMany(() => Collection, (collection) => collection.reports, { nullable: true })
+  @JoinTable({
+    name: 'report_collections',
+    joinColumn: {
+      name: 'report_id',
+      referencedColumnName: 'id'
+    },
+    inverseJoinColumn: {
+      name: 'collection_id',
+      referencedColumnName: 'id'
+    }
+  })
+  collections!: Collection[];
+
   @CreateDateColumn()
   createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt!: Date; 
-  
+  updatedAt!: Date;
+
+  @Column({ nullable: true })
+  notes?: string;
+
+  @Column({ name: 'is_archived', type: 'boolean', default: false })
+  is_archived!: boolean;
+
 }

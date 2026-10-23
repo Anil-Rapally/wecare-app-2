@@ -1,4 +1,11 @@
-import{Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany} from "typeorm";
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToMany
+} from "typeorm";
 import { Report } from "./reports.entity";
 
 @Entity("collection")
@@ -9,7 +16,7 @@ export class Collection {
   @Column({ unique: true })
   name!: string;
 
-  @OneToMany(() => Report, (report) => report.collection)
+  @ManyToMany(() => Report, (report) => report.collections)
   reports!: Report[];
 
   @CreateDateColumn()

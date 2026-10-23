@@ -28,7 +28,7 @@ export const ReportsPaginationConfig: PaginateConfig<Report>= {
     maxLimit:100,
 
     relations:{
-        collection:true,
+        collections:true,
     },
 
     select: [
