@@ -5,9 +5,10 @@ import { OtpEntity } from '../../user/entity/otp.entity';
 import { Report } from '../../user/entity/reports.entity';
 import { Collection } from '../../user/entity/collection.entity';
 
-import { UserLogin1789471325599 } from 'src/database/migrations/1789471325599-UserLogin';
-import { UserOtp1789472984498 } from 'src/database/migrations/1789472984498-UserOtp';
-import { ExpandReportFileData1791289524000 } from 'src/database/migrations/1791289524000-ExpandReportFileData';
+import { UserLogin1789471325599 } from '../../database/migrations/1789471325599-UserLogin';
+import { UserOtp1789472984498 } from '../../database/migrations/1789472984498-UserOtp';
+import { ExpandReportFileData1791289524000 } from '../../database/migrations/1791289524000-ExpandReportFileData';
+import { AddIsArchivedToReport1792746951905 } from '../../database/migrations/1792746951905-AddIsArchivedToReport';
 
 
 export function validateEnvironment(environment: Record<string, unknown>): Record<string, unknown> {
@@ -78,6 +79,7 @@ export function databaseOptions(): DataSourceOptions {
       UserLogin1789471325599,
       UserOtp1789472984498,
       ExpandReportFileData1791289524000,
+      AddIsArchivedToReport1792746951905,
     ],
     migrationsTableName: 'migrations',
     synchronize: false,

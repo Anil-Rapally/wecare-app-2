@@ -1,7 +1,8 @@
-import { Body, Controller, FileTypeValidator,
-        Get, MaxFileSizeValidator, Param, ParseFilePipe,
-        ParseIntPipe, Patch, Post, Query, Res, UploadedFile, UseInterceptors,
-       } from '@nestjs/common';
+import {
+    Body, Controller, FileTypeValidator,
+    Get, MaxFileSizeValidator, Param, ParseFilePipe,
+    ParseIntPipe, Patch, Post, Query, Res, UploadedFile, UseInterceptors,
+} from '@nestjs/common';
 
 import { ReportsService } from './reports.service';
 import { Report } from '../entity/reports.entity';
@@ -14,7 +15,7 @@ import type { Paginated, PaginateQuery } from 'nestjs-paginate';
 
 import { MonthlyReportQueryDto } from '../dto/monthly.report.query.dto';
 import { ReportQueryDto, ReportSort } from '../dto/reports.query.dto';
-import { ApiTags, ApiOperation, ApiExtraModels, ApiResponse, ApiConsumes,ApiBody, getSchemaPath, ApiParam } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiExtraModels, ApiResponse, ApiConsumes, ApiBody, getSchemaPath, ApiParam } from '@nestjs/swagger';
 import { UpdateReportDto } from '../dto/update.report.dto';
 import { AddReportToCollectionsDto } from '../dto/add-report-to-collections.dto';
 
@@ -23,9 +24,9 @@ import { AddReportToCollectionsDto } from '../dto/add-report-to-collections.dto'
 @Controller('reports')
 export class ReportsController {
 
-    constructor(private reportsService: ReportsService) {}
+    constructor(private reportsService: ReportsService) { }
 
-// Fetch all reports with pagination, sorting, and filtering.
+    // Fetch all reports with pagination, sorting, and filtering.
     @Get()
     @ApiOperation({ summary: 'Get all Reports' })
     @ApiResponse({
@@ -33,8 +34,8 @@ export class ReportsController {
         description: 'Reports retrieved successfully.',
     })
     getReports(
-    @Paginate() query: PaginateQuery,
-    @Query() reportQueryDto: ReportQueryDto,
+        @Paginate() query: PaginateQuery,
+        @Query() reportQueryDto: ReportQueryDto,
     ): Promise<Paginated<Report>> {
 
         const sort = reportQueryDto.sort;
@@ -46,14 +47,14 @@ export class ReportsController {
             query.sortBy = [['createdAt', 'ASC']];
         }
 
-        if(reportQueryDto.fromDate){
+        if (reportQueryDto.fromDate) {
             query.filter = {
                 ...query.filter,
                 report_date: [`$gte:${new Date(reportQueryDto.fromDate).toISOString()}`],
             };
         }
 
-        if(reportQueryDto.toDate){
+        if (reportQueryDto.toDate) {
             query.filter = {
                 ...query.filter,
                 report_date: [
@@ -64,97 +65,97 @@ export class ReportsController {
         }
 
         const tags = reportQueryDto.tags?.trim();
-            if (tags) {
-                query.filter = {
-                    ...query.filter,
-                    tags: [`$ilike:%${tags}%`],
-                };
-            }
+        if (tags) {
+            query.filter = {
+                ...query.filter,
+                tags: [`$ilike:%${tags}%`],
+            };
+        }
 
         return this.reportsService.findAll(query);
     }
 
-// Get the count of reports for a specific year and month.
+    // Get the count of reports for a specific year and month.
     @Get('monthly-count')
     @ApiOperation({
         summary: 'Get reports by Monthly count',
-        description:'Get reports grouped by months for a specific year, or retrieve reports for a specific month'
+        description: 'Get reports grouped by months for a specific year, or retrieve reports for a specific month'
     })
     @ApiResponse({
-        status:200,
-        description:' Reports data retrieved succesfully.'
+        status: 200,
+        description: ' Reports data retrieved succesfully.'
     })
     @ApiResponse({
-        status:400,
-        description:'Invalid year or month'
+        status: 400,
+        description: 'Invalid year or month'
     })
     async getMonthlyCount(
         @Query() query: MonthlyReportQueryDto,
-    ){
+    ) {
         const year = query.year ?? new Date().getFullYear();
 
-        return this.reportsService.getMonthlyCount(year,query.month)
+        return this.reportsService.getMonthlyCount(year, query.month)
     }
 
 
-// Upload a new report along with its associated collection.
+    // Upload a new report along with its associated collection.
     @ApiExtraModels(UploadReportsDto)
     @Post('Upload')
     @ApiOperation({
         summary: 'Upload medical report',
         description:
-        'Upload a medical report and save its details in a selected or newly created collection.',
+            'Upload a medical report and save its details in a selected or newly created collection.',
     })
     @ApiConsumes('multipart/form-data')
     @ApiBody({
-        schema:{
-            allOf:[
+        schema: {
+            allOf: [
                 {
                     $ref: getSchemaPath(UploadReportsDto),
                 },
                 {
-                    type:'object',
+                    type: 'object',
                     properties: {
-                        file:{
-                            type:'string',
-                            format:'binary',
-                            description:'PDF, JPG, JPEG or PNG file. Maximum size: 25MB.',
+                        file: {
+                            type: 'string',
+                            format: 'binary',
+                            description: 'PDF, JPG, JPEG or PNG file. Maximum size: 25MB.',
                         }
                     },
-                    required:['file'],
+                    required: ['file'],
                 }
             ]
         }
     })
     @ApiResponse({
-    status: 201,
-    description: 'Report uploaded successfully.',
+        status: 201,
+        description: 'Report uploaded successfully.',
     })
     @ApiResponse({
-    status: 400,
-    description: 'Invalid report data or file.',
+        status: 400,
+        description: 'Invalid report data or file.',
     })
     @ApiResponse({
-    status: 404,
-    description: 'Collection not found.',
+        status: 404,
+        description: 'Collection not found.',
     })
     @UseInterceptors(FileInterceptor('file'))
     uploadReport(
         @UploadedFile(
-        new ParseFilePipe({
-            validators: [
-            new MaxFileSizeValidator({
-                maxSize: 1024 * 1024 * 25,
-                message: 'File is too large! Maximum allowed size is 25MB',
-            }),
+            new ParseFilePipe({
+                validators: [
+                    new MaxFileSizeValidator({
+                        maxSize: 1024 * 1024 * 25,
+                        message: 'File is too large! Maximum allowed size is 25MB',
+                    }),
 
-            new FileTypeValidator({
-                fileType: '.(jpg|jpeg|png|pdf)',
-                errorMessage:
-                'Invalid file format, only JPG, JPEG, PNG and PDF are allowed',
+                    new FileTypeValidator({
+                        fileType: '.(jpg|jpeg|png|pdf)',
+                        errorMessage:
+                            'Invalid file format, only JPG, JPEG, PNG and PDF are allowed',
+                    }),
+                ],
             }),
-            ],
-        }),
         )
         file: Express.Multer.File,
 
@@ -163,7 +164,8 @@ export class ReportsController {
         return this.reportsService.saveReport(file, body);
     }
 
-// View the uploaded report file in the browser.
+    // View the uploaded report file in the browser.
+
     @Get('view/:id')
     @ApiOperation({
         summary: 'View uploaded report',
@@ -196,14 +198,14 @@ export class ReportsController {
         res.setHeader('Content-Type', report.file_type);
 
         res.setHeader(
-        'Content-Disposition',
-        `inline; filename="${encodeURIComponent(report.file_name)}"`,
+            'Content-Disposition',
+            `inline; filename="${encodeURIComponent(report.file_name)}"`,
         );
 
         res.send(report.file_data);
     }
 
-// Download the uploaded report file as an attachment.
+    // Download the uploaded report file as an attachment.
 
     @Get('download/:id')
     @ApiOperation({
@@ -244,7 +246,7 @@ export class ReportsController {
         res.send(report.file_data);
     }
 
-// Replace the file attached to an existing medical report.
+    // Replace the file attached to an existing medical report.
 
     @Patch(':id/file')
     @ApiOperation({
@@ -339,7 +341,7 @@ export class ReportsController {
     }
 
 
-// Add a report to one or more collections.
+    // Add a report to one or more collections.
 
     @Post(':id/collections')
     @ApiOperation({
@@ -370,6 +372,34 @@ export class ReportsController {
 
         return await this.reportsService.addReportToCollections(id, addReportToCollectionsDto.collection_ids);
     }
+
+// add reports   to Archive 
+    @Patch(':id/archive')
+    @ApiOperation({
+         summary: 'Archive a report by ID' 
+    })
+    @ApiParam({
+        name: 'id',
+        type: Number, 
+        description: 'Report ID' 
+    })
+    @ApiResponse({
+        status: 200, 
+        description: 'Report archived successfully' 
+    })
+    @ApiResponse({
+        status: 404, description: 'Report not found' 
+    })
+    async archiveReport(
+        @Param('id', ParseIntPipe) id: number,
+    ) {
+        const report = await this.reportsService.archiveReport(id);
+
+        return {
+            data: report,
+        };
+    }
+
 
 
 }

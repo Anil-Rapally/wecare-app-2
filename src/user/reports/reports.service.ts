@@ -9,7 +9,7 @@ import { UploadReportsDto } from '../dto/upload.reports.dto';
 import { UpdateReportDto } from '../dto/update.report.dto';
 
 import { ReportsPaginationConfig } from 'src/common/config/reports-pagination.config';
-import { paginate, Paginated, PaginateQuery,  } from 'nestjs-paginate';
+import { paginate, Paginated, PaginateQuery, } from 'nestjs-paginate';
 
 import { I18nService } from 'nestjs-i18n';
 
@@ -34,7 +34,7 @@ export class ReportsService {
 
     ) { }
 
-// Fetch all reports with pagination, sorting, and filtering.
+    // Fetch all reports with pagination, sorting, and filtering.
 
     async findAll(
         query: PaginateQuery,
@@ -50,11 +50,11 @@ export class ReportsService {
         result.data = await Promise.all(
             result.data.map(async (report) => {
                 const fullReport = await this.reportRepository.findOne({
-                    where: {id: report.id},
-                    relations:{
-                        collections:true,
-                }
-            });
+                    where: { id: report.id },
+                    relations: {
+                        collections: true,
+                    }
+                });
                 return {
                     ...report,
                     collections: fullReport?.collections ?? [],
@@ -66,7 +66,7 @@ export class ReportsService {
         return result;
     }
 
-// Fetch a report by its ID.
+    // Fetch a report by its ID.
 
     async findById(id: number): Promise<Report> {
         const report = await this.reportRepository.findOne({
@@ -81,7 +81,7 @@ export class ReportsService {
         return report;
     }
 
-// Get the count of reports for a specific year and month.
+    // Get the count of reports for a specific year and month.
 
     async getMonthlyCount(year: number, month?: number) {
         const query = this.reportRepository
@@ -144,7 +144,7 @@ export class ReportsService {
         };
     }
 
-// Save a new report along with its associated collection.
+    // Save a new report along with its associated collection.
 
     async saveReport(
         file: Express.Multer.File, reportData: UploadReportsDto,
@@ -231,7 +231,7 @@ export class ReportsService {
         return reportResonse;
     }
 
-// Replace the file attached to an existing report.
+    // Replace the file attached to an existing report.
 
     async replaceReportFile(
         id: number,
@@ -254,7 +254,7 @@ export class ReportsService {
         return reportResponse;
     }
 
-// Update an existing report's details.
+    // Update an existing report's details.
 
     async updateReport(id: number,
         updateReportDto: UpdateReportDto): Promise<Report> {
@@ -275,29 +275,29 @@ export class ReportsService {
 
     }
 
-// Add a report to one or more collections.
+    // Add a report to one or more collections.
 
     async addReportToCollections(
         reportId: number,
         collectionIds: number[],) {
 
-        const report = await this . reportRepository.findOne({
-            where: {id :reportId},
-            relations:{
-                collections:true,
+        const report = await this.reportRepository.findOne({
+            where: { id: reportId },
+            relations: {
+                collections: true,
             }
         })
 
-        if (!report){
+        if (!report) {
             throw new BadRequestException(
                 this.i18n.translate('validation.REPORT_NOT_FOUND')
             );
         }
 
         const collections = await this.collectionRepository.findBy({
-            id:In(collectionIds),
+            id: In(collectionIds),
         })
-        if(collections.length !== new Set(collectionIds).size){
+        if (collections.length !== new Set(collectionIds).size) {
             throw new BadRequestException(
                 this.i18n.translate('validation.INVALID_COLLECTION')
             )
@@ -321,6 +321,19 @@ export class ReportsService {
                 (collection) => collection.id,
             ),
         };
+    }
+
+    // Archive a report by its ID.
+    async archiveReport(id: number) {
+        const report = await this.findById(id);
+
+        report.is_archived = true;
+
+        await this.reportRepository.save(report);
+
+        const { file_data, ...reportData } = report;
+
+        return reportData;
     }
 
 }
