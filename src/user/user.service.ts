@@ -7,7 +7,6 @@ import { AuthService } from 'src/common/auth/auth.service';
 import { CreateUserDto } from './dto/create_user.dto';
 import { OtpService } from './otp/otp.service';
 import { ConflictException, NotFoundException } from '@nestjs/common';
-import { I18nService } from 'nestjs-i18n';
 
 @Injectable()
 export class UserService {
@@ -16,30 +15,22 @@ export class UserService {
         @InjectRepository(UsersEntity) private readonly userRepository: Repository<UsersEntity>,
         private readonly authService: AuthService,
         private readonly optService: OtpService,
-        private readonly i18n: I18nService
 
     ) { }
 
     async login(login_dto: LoginDto) {
         const value = login_dto.email || login_dto.phone_number;
-        if (!value || (login_dto.email && login_dto.phone_number)) {
-            throw new BadRequestException('Provide either an email or phone number');
-        }
+
         if (!login_dto.otp) {
-            await this.optService.generateOtp(value);
-            return {
-                message: 'validation.otp_sent_successfully',
-            };
+            console.log('otp genertion called');
+            return await this.optService.generateOtp(value);
         }
 
         const verification = await this.optService.verifyOtp(value, login_dto.otp,);
         if (!verification.verified) {
-            throw new UnauthorizedException({ message: verification.message });
+            throw new UnauthorizedException({ message: 'validation.incorrect_otp' });
         }
-
-        const where = login_dto.email
-            ? { email: value }
-            : { phone_number: value };
+        const where = login_dto.email ? { email: value } : { phone_number: value };
 
         let user = await this.userRepository.findOne({ where });
         if (!user) {
@@ -50,19 +41,19 @@ export class UserService {
             });
             user = await this.userRepository.save(user);
         }
-        if (user.is_profile_exists) {
-            const issued = await this.authService.issue_jwt(user.id, 'access');
-            return {
-                access_token: issued.token,
-                token_type: 'Bearer',
-                expires_in: issued.expires_in,
-                message: 'validation.otp_verified',
-                nextStep: 'dashboard' as const,
-            };
+        const issued = await this.authService.issue_jwt(user.id);
+        const result = {
+            id: user.id,
+            email: user.email,
+            phone_number: user.phone_number,
+            is_profile_exists: user.is_profile_exists,
         }
-        const issued = await this.authService.issue_jwt(user.id, 'signup');
+        if (user.is_profile_exists) {
+            return result;
+        }
         return {
-            signup_token: issued.token,
+            ...result,
+            token: issued.token,
             token_type: 'Bearer',
             expires_in: issued.expires_in,
             message: 'validation.otp_verified',
@@ -88,7 +79,7 @@ export class UserService {
 
         await this.userRepository.save(user);
 
-        const issued = await this.authService.issue_jwt(user.id, 'access');
+        const issued = await this.authService.issue_jwt(user.id);
         return {
             message: 'validation.profile_created',
             is_profile_exists: user.is_profile_exists,
@@ -109,12 +100,13 @@ export class UserService {
             };
         }
         const result = await this.userRepository.update(
-            { id: user_id }, { is_profile_exists: true, profile_photo: file.buffer }
+            { id: user_id }, { is_profile_exists: true, profile_photo: file.buffer, is_photo_exists: true, }
         );
         return {
             result,
             message: 'validation.profile_updated',
             is_profile_exists: true,
+            is_photo_exists: true,
             nextStep: 'dashboard',
         };
     }
@@ -138,13 +130,39 @@ export class UserService {
 
 
     async getProfilePhoto(userId: string): Promise<Buffer> {
-        const user = await this.userRepository
-            .createQueryBuilder('user')
-            .select('user.id')
-            .addSelect('user.profile_photo')
-            .where('user.id = :userId', { userId })
-            .getOne();
+        const user = await this.userRepository.findOne({
+            where: { id: userId },
+            select: {
+                id: true,
+                profile_photo: true,
+            },
+        });
         if (!user?.profile_photo) throw new NotFoundException({ message: 'validation.no_profile_photo' });
         return user.profile_photo;
+    }
+
+
+    async skipSignup(userId: string) {
+        const user = await this.userRepository.findOne({ where: { id: userId } });
+        if (user?.is_profile_exists === false) {
+            await this.userRepository.update({ id: userId }, { is_profile_exists: true, })
+            const issued = await this.authService.issue_jwt(user.id);
+            return {
+                message: 'validation.profile_skiped',
+                access_token: issued.token,
+                expires_in: issued.expires_in,
+                next_step: 'home screen',
+            }
+        }
+        if (user?.is_profile_exists === true && user.is_photo_exists === false) {
+            await this.userRepository.update({ id: userId }, { is_profile_exists: true, is_photo_exists: true });
+            const issued = await this.authService.issue_jwt(user.id);
+            return {
+                message: 'validation.photo_skiped',
+                access_token: issued.token,
+                expires_in: issued.expires_in,
+                next_step: 'home screen',
+            }
+        }
     }
 }

@@ -9,7 +9,6 @@ import { join } from 'node:path';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RedisModule } from './common/redis/redis.module';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
-import { SmsService } from './common/sms/sms.service';
 
 @Module({
   imports: [UserModule,
@@ -32,6 +31,6 @@ import { SmsService } from './common/sms/sms.service';
     RedisModule,
   ],
   controllers: [AppController],
-  providers: [AppService, ResponseInterceptor, SmsService],
+  providers: [AppService, ResponseInterceptor],
 })
 export class AppModule { }

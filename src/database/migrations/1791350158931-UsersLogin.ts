@@ -77,7 +77,13 @@ async up(queryRunner: QueryRunner): Promise<void> {
             {              
               name: 'is_profile_exists',
               type: 'tinyint',
-              isNullable: false,
+              isNullable: true,
+              default: '0',
+            },
+            {
+              name: 'is_photo_exists',
+              type: 'tinyint',
+              isNullable: true,
               default: '0',
             },
             {

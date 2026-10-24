@@ -1,7 +1,7 @@
 import { UserService } from './user.service';
 import { LoginDto } from './dto/login.dto';
 import { CreateUserDto } from './dto/create_user.dto';
-import { AuthGuard, RequirePurpose } from '../common/guards/auth.guard';
+import { AuthGuard } from '../common/guards/auth.guard';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -87,7 +87,6 @@ export class UserController {
   @Post('signup')
   @Header('Cache-Control', 'no-store')
   @UseGuards(AuthGuard)
-  @RequirePurpose('signup')
   signup(@CurrentUser() user: UsersEntity, @Body() dto: CreateUserDto) {
     return this.userService.createUser(user.id, dto);
   }
@@ -126,7 +125,6 @@ export class UserController {
   @HttpCode(200)
   @Header('Cache-Control', 'no-store')
   @UseGuards(AuthGuard)
-  @RequirePurpose('access')
   @UseInterceptors(
     FileInterceptor('file', {
       storage: memoryStorage(),
@@ -178,7 +176,6 @@ export class UserController {
   @Get('userprofile')
   @Header('Cache-Control', 'no-store')
   @UseGuards(AuthGuard)
-  @RequirePurpose('access')
   getProfile(@CurrentUser() user: UsersEntity) {
     return {
       message: 'validation.profile_retrieved',
@@ -217,11 +214,17 @@ export class UserController {
   @Header('Cache-Control', 'no-store')
   @Header('X-Content-Type-Options', 'nosniff')
   @UseGuards(AuthGuard)
-  @RequirePurpose('access')
   async getPhoto(@CurrentUser() user: UsersEntity) {
     return new StreamableFile(await this.userService.getProfilePhoto(user.id), {
       type: 'image/jpeg',
       disposition: 'inline; filename="profile.jpg"',
     });
+  }
+
+
+  @Post('skip')
+  @UseGuards(AuthGuard)
+  skipOnboarding(@CurrentUser() user: UsersEntity) {
+    return this.userService.skipSignup(user.id);
   }
 }

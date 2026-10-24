@@ -30,6 +30,8 @@
     "otp_expired": "The otp verification code has expired.",
     "incorrect_otp": "Incorrect OTP.",
     "profile_exists": "Profile already exists.",
+    "profile_skiped": "User skipped the profile setup",
+    "photo_skiped": "User skipped profile photo",
     "user_not_found": "User not found.",
     "profile_created": "Profile created successfully.",
     "profile_photo_skipped": "Profile photo skipped.",
@@ -43,6 +45,6 @@
     "purpose_token_required": "This endpoint requires a {purpose} token.",
     "complete_profile": "Complete your profile first.",
     "expired_token": "Invalid or expired token. Verify your email again.",
-    "invalid_claims": "Invalid claims",
+    "invalid_token": "Invalid token",
     "too_many_attempts": "Too Many Attempts, Please Retry Later"
 }

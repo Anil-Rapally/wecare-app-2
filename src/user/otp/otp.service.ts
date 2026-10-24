@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException, HttpException, HttpStatus, Inject } from '@nestjs/common';
 import { EmailService } from 'src/common/email/email.service';
-import { Redis } from 'ioredis';
+import type { Redis } from 'ioredis';
 import { randomInt } from 'crypto';
 
 
@@ -24,72 +24,31 @@ export class OtpService {
   }
 
   async generateOtp(user_identifier: string): Promise<{ message: string; }> {
-    let otp = randomInt(0, 10000).toString().padStart(4, '0');
-
+    const otp = randomInt(0, 10000).toString().padStart(4, '0');
     const ttl = 300;
     const { type, identifier } = this.identifyUser(user_identifier);
-    const existing_user = await this.redis.get(`user_attempts:${identifier}`);
-    if (existing_user) {
-      const attempts = parseInt(existing_user);
-      if (attempts > 5) {
-        throw new HttpException({ message: 'validation.too_many_attempts' },
-          HttpStatus.TOO_MANY_REQUESTS,
-        );
-      }
-      await this.redis.set(`user_attempts:${identifier}`, (attempts + 1).toString(), 'EX', 3600);
-
-
-      const resend_otp_attempts = await this.redis.get(`resend_otp_attempts:${identifier}`);
-      if (resend_otp_attempts && parseInt(resend_otp_attempts) > 3) {
-        throw new HttpException({ message: 'validation.otp_limit_reached' },
-          HttpStatus.TOO_MANY_REQUESTS,
-        );
-      }
-      await this.redis.set(`resend_otp_attempts:${identifier}`, (parseInt(resend_otp_attempts || '0') + 1).toString(), 'EX', ttl);
-
-
-      const resend_otp_after = await this.redis.get(`resend_otp_after:${identifier}`);
-      if (resend_otp_after && parseInt(resend_otp_after) > Date.now()) {
-        throw new HttpException({ message: 'validation.otp_resend_wait', messageArgs: { seconds: Math.ceil((parseInt(resend_otp_after) - Date.now()) / 1000) } },
-          HttpStatus.TOO_MANY_REQUESTS,
-        );
-      }
-
-      await this.redis.set(`otp:${identifier}`, otp, 'EX', ttl);
-      if (type === 'email') {
-        await this.mail.sendOtp(identifier, otp);
-      }else{await this.redis.set(`otp:${identifier}`, '0000');}
-      await this.redis.set(`resend_otp_after:${identifier}`, (Date.now() + 60000).toString(), 'EX', ttl);
-      return { message: 'validation.otp_sent_successfully' };
-    }
-
+    type === 'email' && await this.mail.sendOtp(identifier, otp);
     await this.redis.set(`otp:${identifier}`, otp, 'EX', ttl);
-    if (type === 'email') {
-      await this.mail.sendOtp(identifier, otp);
-    }else{await this.redis.set(`otp:${identifier}`, '0000');}
-    await this.redis.set(`user_attempts:${identifier}`, '1', 'EX', 3600);
-    await this.redis.set(`resend_otp_attempts:${identifier}`, '1', 'EX', ttl);
-    await this.redis.set(`resend_otp_after:${identifier}`, (Date.now() + 60000).toString(), 'EX', ttl);
+    console.log(type);
+    console.log(otp);
     return { message: 'validation.otp_sent_successfully' };
   }
 
-  async verifyOtp(user_identifier: string, user_otp: string): Promise<{ verified: boolean; message: string; }> {
-    const { type, identifier } = this.identifyUser(user_identifier);
+  async verifyOtp(user_identifier: string, user_otp: string): Promise<{ verified: boolean }> {
+    const { identifier } = this.identifyUser(user_identifier);
     const storedOtp = await this.redis.get(`otp:${identifier}`);
     if (!storedOtp) {
       throw new HttpException({ message: 'validation.otp_expired' },
         HttpStatus.BAD_REQUEST,
       );
     }
-    if (storedOtp !== user_otp) {
-      throw new HttpException({ message: 'validation.incorrect_otp' },
-        HttpStatus.BAD_REQUEST,
-      );
+    if (storedOtp === user_otp) {
+      return {
+        verified: true
+      }
     }
-    await this.redis.del(`otp:${identifier}`);
     return {
-      verified: true,
-      message: 'validation.otp_verified',
-    };
+      verified: false
+    }
   }
 }

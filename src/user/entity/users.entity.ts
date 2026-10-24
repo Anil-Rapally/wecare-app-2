@@ -33,24 +33,24 @@ export class UsersEntity {
     @Column({ type: 'varchar', length: 20, nullable: true })
     phone_number: string | null;
 
-    @Column({ type: 'varchar', length: 200, nullable: false })
+    @Column({ type: 'varchar', length: 200, nullable: true })
     @IsNotEmpty()
     full_name: string;
 
-    @Column({ type: 'date', nullable: false })
+    @Column({ type: 'date', nullable: true })
     date_of_birth: string;
 
-    @Column({ type: 'enum', enum: Gender, nullable: false })
+    @Column({ type: 'enum', enum: Gender, nullable: true })
     @IsNotEmpty()
     @IsEnum(Gender)
     gender: Gender;
 
-    @Column({ type: 'enum', enum: BloodGroup, nullable: false })
+    @Column({ type: 'enum', enum: BloodGroup, nullable: true })
     @IsNotEmpty()
     @IsEnum(BloodGroup)
     blood_group: BloodGroup;
 
-    @Column({ type: 'varchar', length: 25, nullable: false })
+    @Column({ type: 'varchar', length: 25, nullable: true })
     @IsNotEmpty()
     emergency_contact: string;
 
@@ -62,6 +62,9 @@ export class UsersEntity {
 
     @Column({ default: false })
     is_profile_exists: boolean;
+
+    @Column({default: false})
+    is_photo_exists: boolean;
 
     @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
     created_at: Date;
