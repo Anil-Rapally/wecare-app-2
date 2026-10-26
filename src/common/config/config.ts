@@ -1,6 +1,10 @@
 import type { DataSourceOptions } from 'typeorm';
 import { UsersEntity } from '../../user/entity/users.entity';
-import { UsersLogin1791350158931 } from '../../database/migrations/1791350158931-UsersLogin'
+import { UsersLogin1791350158931 } from '../../database/migrations/1791350158931-UsersLogin';
+import { ExpandReportFileData1791289524000 } from '../../database/migrations/1791289524000-ExpandReportFileData';
+import { AddIsArchivedToReport1792746951905 } from '../../database/migrations/1792746951905-AddIsArchivedToReport';
+import { Report } from 'src/user/entity/reports.entity';
+import { Collection } from 'src/user/entity/collection.entity';
 
 
 export function validateEnvironment(environment: Record<string, unknown>): Record<string, unknown> {
@@ -66,8 +70,8 @@ export function databaseOptions(): DataSourceOptions {
     database: process.env.DB_DATABASE,
     charset: 'utf8mb4_unicode_ci',
     timezone: 'Z',
-    entities: [UsersEntity],
-    migrations: [UsersLogin1791350158931],
+    entities: [UsersEntity, Report, Collection,],
+    migrations: [UsersLogin1791350158931, ExpandReportFileData1791289524000, AddIsArchivedToReport1792746951905,],
     migrationsTableName: 'migrations',
     synchronize: false,
     migrationsRun: false,
