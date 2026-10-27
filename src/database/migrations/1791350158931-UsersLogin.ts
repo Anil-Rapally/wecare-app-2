@@ -1,9 +1,9 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 import { Table, TableUnique } from "typeorm";
 
-export class UserLogin1789471325599 implements MigrationInterface {
+export class UsersLogin1791350158931 implements MigrationInterface {
 
-      async up(queryRunner: QueryRunner): Promise<void> {
+async up(queryRunner: QueryRunner): Promise<void> {
     const hasUsers = await queryRunner.hasTable('users');
     if (hasUsers) {
       throw new Error(
@@ -13,7 +13,7 @@ export class UserLogin1789471325599 implements MigrationInterface {
     else {
       await queryRunner.createTable(
         new Table({
-          name: 'User',
+          name: 'Users',
           columns: [
             {
               name: 'id',
@@ -26,16 +26,22 @@ export class UserLogin1789471325599 implements MigrationInterface {
               name: 'email',
               type: 'varchar',
               length: '300',
-              isNullable: false,
+              isNullable: true,
             },
             {
-              name: 'fullName',
+              name: 'phone_number',
+              type: 'varchar',
+              length: '20',
+              isNullable: true,
+            },
+            {
+              name: 'full_name',
               type: 'varchar',
               length: '200',
               isNullable: true,
             },
             {
-              name: 'dateOfBirth',
+              name: 'date_of_birth',
               type: 'date',
               isNullable: true,
             },
@@ -46,13 +52,13 @@ export class UserLogin1789471325599 implements MigrationInterface {
               isNullable: true,
             },
             {
-              name: 'bloodGroup',
+              name: 'blood_group',
               type: 'varchar',
               length: '3',
               isNullable: true,
             },
             {
-              name: 'emergencyContact',
+              name: 'emergency_contact',
               type: 'varchar',
               length: '25',
               isNullable: true,
@@ -64,34 +70,41 @@ export class UserLogin1789471325599 implements MigrationInterface {
               isNullable: true,
             },
             {
-              name: 'profilePhotoUrl',
-              type: 'varchar',
-              length: '1000',
-              isNullable: true,
-            },
-            {
-              name: 'profilePhoto',
+              name: 'profile_photo',
               type: 'mediumblob',
               isNullable: true,
             },
-            {
-              name: 'isEmailVerified',
+            {              
+              name: 'is_profile_exists',
               type: 'tinyint',
-              isNullable: false,
+              isNullable: true,
               default: '0',
             },
             {
-              
-              name: 'isProfileExists',
+              name: 'is_photo_exists',
               type: 'tinyint',
-              isNullable: false,
+              isNullable: true,
               default: '0',
+            },
+            {
+              name: 'created_at',
+              type: 'datetime',
+              isNullable: true,
+            },
+            {
+              name: 'updated_at',
+              type: 'datetime',
+              isNullable: true,
             },
           ],
           uniques: [
             new TableUnique({
-              name: 'UQ_users_email',
+              name: 'Unique_users_email',
               columnNames: ['email'],
+            }),
+            new TableUnique({
+              name: 'Unique_users_phone_number',
+              columnNames: ['phone_number'],
             }),
           ],
         }),
@@ -101,7 +114,7 @@ export class UserLogin1789471325599 implements MigrationInterface {
   }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.dropTable('User');
+        await queryRunner.dropTable('Users');
     }
 
 }

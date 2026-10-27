@@ -1,52 +1,54 @@
-import { IsNotEmpty, Matches, IsDateString, IsOptional, IsString, MaxLength } from 'class-validator';
-import { i18nValidationMessage } from 'nestjs-i18n';
-import { Transform } from 'class-transformer';
+import { IsNotEmpty, IsEnum, IsOptional, IsString, MaxLength, IsPhoneNumber, IsDate, MinDate, MaxDate, IsAlpha } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Gender, BloodGroup } from '../entity/users.entity';
 
+const getMinAgeLimit = () => {
+    const date = new Date();
+    date.setFullYear(date.getFullYear() - 200);
+    return date;
+}
 
 export class CreateUserDto {
 
-    @ApiProperty({
-        example: "UserName"
-    })
+    
+
+    @ApiProperty({ example: "UserName" })
     @Transform(({ value }) => typeof value === 'string' ? value.trim() : value)
-    @IsNotEmpty({ message: i18nValidationMessage('validation.ENTER_NAME') })
-    fullName!: string;
+    @IsNotEmpty({ message:'validation.enter_name' })
+    @IsString({ message: 'validation.name_invalid' })
+    @IsAlpha('en-US', { message: 'validation.name_invalid' })
+    full_name: string;
 
-    @ApiProperty({ example: "2000-01-01"})
-    @IsNotEmpty({ message: i18nValidationMessage('validation.SELECT_DOB') })
-    @Matches(/^\d{4}-\d{2}-\d{2}$/, { message: i18nValidationMessage('validation.VALID_DOB') })
-    @IsDateString(
-        { strict: true },
-        { message: i18nValidationMessage('validation.VALID_DOB') },
-    )
-    dateOfBirth!: string;
+    @ApiProperty({ example: "2000-01-01" })
+    @IsNotEmpty({ message:'validation.select_dob' })
+    @Type(() => Date)
+    @IsDate({ message:'validation.valid_dob' })
+    @MinDate(getMinAgeLimit(), { message:'validation.valid_dob' })
+    @MaxDate(new Date(), { message:'validation.valid_dob' })
+    date_of_birth: string;
 
-    @ApiProperty({
-        example: 'male',
-    })
-    @IsNotEmpty({ message: i18nValidationMessage('validation.SELECT_GENDER') })
-    @Matches(/^(male|female|other)$/, { message: i18nValidationMessage('validation.VALID_GENDER') })
-    gender!: string;
+    @ApiProperty({ example: 'male' })
+    @IsNotEmpty({ message: 'validation.select_gender' })
+    @IsEnum(Gender, { message: 'validation.select_gender' })
+    gender: Gender;
 
-    @ApiProperty({
-        example: "O+",
-    })
-    @IsNotEmpty({ message: i18nValidationMessage('validation.SELECT_BG') })
-    @Matches(/^(A|B|AB|O)[+-]$/, { message: i18nValidationMessage('validation.VALID_BG') })
-    bloodGroup!: string;
+    @ApiProperty({ example: "O+" })
+    @IsNotEmpty({ message: 'validation.select_blood_group' })
+    @IsEnum(BloodGroup, { message: 'validation.valid_blood_group' })
+    blood_group: BloodGroup;
 
-
-    @IsNotEmpty({ message: i18nValidationMessage('validation.ENTER_EMERGENCY_CONTACT') })
-    @Matches(/^\+?[1-9]\d{7,14}$/, { message: i18nValidationMessage('validation.ENTER_VALID_EC') })
-    emergencyContact!: string;
+    @ApiProperty({example :"+911234567890"})
+    @IsNotEmpty({ message: 'validation.enter_emergency_contact' })
+    @IsPhoneNumber(undefined, { message: 'validation.valid_emergency_contact' })
+    emergency_contact: string;
 
     @IsOptional()
-    @IsString()
-    @MaxLength(500)
+    @IsString({ message: 'validation.address_invalid' })
+    @MaxLength(500, { message: 'validation.address_too_long' })
     @ApiPropertyOptional({
         example: 'Hyderabad',
         description: 'User address',
     })
-    address?: string;
+    address: string;
 }

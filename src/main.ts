@@ -1,5 +1,4 @@
 import 'reflect-metadata';
-
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
@@ -7,12 +6,13 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { I18nValidationPipe } from 'nestjs-i18n';
-import { ResponseInterceptor } from './common/interceptors/Response.interceptor';
-import { ValidationExceptionFilter } from './common/filters/ValidationException.filter';
-import { HttpExceptionFilter } from './common/filters/HttpException.filter';
+import { ResponseInterceptor } from './common/interceptors/response.interceptor';
+import { ValidationExceptionFilter } from './common/filters/validation_exception.filter';
+import { HttpExceptionFilter } from './common/filters/http_exception.filter';
+import { I18nService } from 'nestjs-i18n';
 import { ResponseExceptionFilter } from './common/filters/response.exceptions';
-import { ReportsModule } from './user/reports/reports.module';
 import { CollectionsModule } from './user/collections/collections.module';
+import { ReportsModule } from './user/reports/reports.module';
 
 
 import * as express from 'express';
@@ -25,7 +25,6 @@ async function bootstrap(): Promise<void> {
       transform: true,
       whitelist: true,
       forbidNonWhitelisted: true,
-      stopAtFirstError: false,
     }),
   );
 
@@ -38,13 +37,15 @@ async function bootstrap(): Promise<void> {
     new ResponseExceptionFilter(),
   );
 
-
-  app.useGlobalFilters(new HttpExceptionFilter(), new ValidationExceptionFilter());
-  app.useGlobalInterceptors(new ResponseInterceptor());
+  const i18n = app.get(I18nService);
+  app.useGlobalFilters(
+    new HttpExceptionFilter(i18n),
+    new ValidationExceptionFilter(i18n),
+  );
+  app.useGlobalInterceptors(app.get(ResponseInterceptor));
   const config = app.get(ConfigService);
   app.use(helmet());
   app.enableCors({ origin: config.getOrThrow<string>('CORS_ORIGIN') });
- 
   app.enableShutdownHooks();
 
   const Reports = new DocumentBuilder()
@@ -54,11 +55,9 @@ async function bootstrap(): Promise<void> {
     .addTag('Reports-Feature')
     .build()
 
-     const docDevA = SwaggerModule.createDocument(app, Reports, {
+  const docDevA = SwaggerModule.createDocument(app, Reports, {
     include: [ReportsModule, CollectionsModule], // only reports and controller modules 
   });
-  SwaggerModule.setup('api/docs/reports', app, docDevA);
-
   const swaggerConfig = new DocumentBuilder()
     .setTitle('WeCare API')
     .setDescription('Authentication, user profile, and profile photo APIs')

@@ -1,50 +1,40 @@
 import { Module } from '@nestjs/common';
-import * as path from 'path';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserModule } from './user/user.module';
 import { validateEnvironment, databaseOptions } from './common/config/config';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { I18nModule, I18nJsonLoader, QueryResolver } from 'nestjs-i18n';
-
+import { I18nModule, AcceptLanguageResolver, I18nJsonLoader } from 'nestjs-i18n';
+import { join } from 'node:path';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { RedisModule } from './common/redis/redis.module';
+import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { ReportsModule } from './user/reports/reports.module';
 import { CollectionsModule } from './user/collections/collections.module';
 
 @Module({
-
-  imports: [
-    
-    ConfigModule.forRoot({
-       isGlobal: true,
-       envFilePath:['.env.local','.env'],
-        validate: validateEnvironment 
-      }),
-
+  imports: [UserModule,
+    ConfigModule.forRoot({ isGlobal: true, validate: validateEnvironment }),
+    TypeOrmModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (_config: ConfigService) => databaseOptions(),
+    }),
     I18nModule.forRoot({
       fallbackLanguage: 'en',
       loader: I18nJsonLoader,
       loaderOptions: {
-        path: path.join(__dirname,'common','i18n'),
-        watch: true,
+        path: join(__dirname, 'common', 'i18n'),
+        watch: false,
       },
       resolvers: [
-        new QueryResolver(['lang','1'])
+        AcceptLanguageResolver,
       ],
     }),
-    
-    TypeOrmModule.forRootAsync({
-      inject: [ConfigService],
-    useFactory: (_config: ConfigService) => databaseOptions(),
-    }),
-
-    UserModule,
+    RedisModule,
     ReportsModule,
     CollectionsModule,
   ],
-
   controllers: [AppController],
-  providers: [AppService],
-
+  providers: [AppService, ResponseInterceptor],
 })
-export class AppModule { }
+export class AppModule { }  

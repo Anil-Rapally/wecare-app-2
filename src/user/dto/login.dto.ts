@@ -1,15 +1,32 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsLowercase, IsNotEmpty } from 'class-validator';
-import { i18nValidationMessage } from 'nestjs-i18n';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsEmail, IsNotEmpty, IsOptional, IsPhoneNumber, Matches, ValidateIf } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class LoginDto {
 
-    @ApiProperty({
-    example: 'user@example.com',
-    description: 'User email address',
+  @ApiPropertyOptional({ example: 'user@example.com' })
+  @ValidateIf((o) => !o.phone_number)
+  @IsEmail({}, { message: 'validation.email_invalid' })
+  @Transform(({ value }) => (typeof value === 'string' ? value.toLowerCase().trim() : value))
+  @IsNotEmpty({message: 'validation.email_required'})
+  @IsOptional()
+  email: string;
+
+  @ApiPropertyOptional({ example: '+911234567890' })
+  @ValidateIf((o) => !o.email)
+  @Transform(({ value }) => (typeof value === 'string' ? value.toLowerCase().trim() : value))
+  @IsPhoneNumber(undefined, { message: 'validation.valid_phone_number' })
+  @IsNotEmpty({message: 'validation.valid_phone_number'})
+  @IsOptional()
+  phone_number: string;
+
+  @ApiPropertyOptional({
+    example: '4821',
+    description:
+      '4-digit OTP. If omitted, a new OTP is generated and sent. If provided, the OTP is verified.',
   })
-    @IsEmail({}, { message: i18nValidationMessage('validation.EMAIL_INVALID') })
-    @IsLowercase({ message: i18nValidationMessage('validation.EMAIL_INVALID') })
-    @IsNotEmpty({ message: i18nValidationMessage('validation.EMAIL_REQUIRED') })
-    email!: string;
+  @IsOptional()
+  @Matches(/^\d{4}$/, { message: 'validation.otp_invalid' })
+  otp: string;
+
 }
