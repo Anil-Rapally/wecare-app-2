@@ -58,61 +58,13 @@ export class ReportsService {
                 return {
                     ...report,
                     collections: fullReport?.collections ?? [],
-                    download_url: `/reports/download/${report.id}`,
                 };
             }),
         );
         return result;
     }
 
-    // Fetch a report by its ID.
-
-    async findById(id: number): Promise<Report> {
-        const report = await this.reportRepository.findOne({
-            where: { id },
-        });
-
-        if (!report) {
-            throw new NotFoundException(
-                this.i18n.translate('validation.REPORT_NOT_FOUND'),
-            );
-        }
-        return report;
-    }
-
-    // Get report details 
-    async getReportDetails(id: number) {
-        const report = await this.reportRepository.findOne({
-            where: { id },
-            relations: {
-                collections: true,
-            },
-        });
-
-        if (!report) {
-            throw new NotFoundException(
-                this.i18n.translate('validation.REPORT_NOT_FOUND'),
-            );
-        }
-
-        return {
-            report_name: report.report_name,
-            uploaded_on: report.createdAt,
-            hospital: report.Hospital_Or_Diagnostic_Center,
-            doctor_name: report.Doctor_name,
-
-            collections: report.collections.map((collection) => ({
-                name: collection.name,
-                updatedAt: collection.updatedAt,
-            })),
-
-            // file_type: report.file_type,
-            // file_name: report.file_name,
-            file_data: report.file_data.toString('base64'),
-        };
-    }
-
-    // Get the count of reports for a specific year and month.
+// Get the count of reports for a specific year and month.
 
     async getMonthlyCount(year: number, month?: number) {
         const query = this.reportRepository
@@ -175,11 +127,25 @@ export class ReportsService {
         };
     }
 
-    // Save a new report along with its associated collection.
+// Fetch a report by its ID.
+    async findById(id: number): Promise<Report> {
+        const report = await this.reportRepository.findOne({
+            where: { id },
+        });
 
+        if (!report) {
+            throw new NotFoundException(
+                this.i18n.translate('validation.REPORT_NOT_FOUND'),
+            );
+        }
+        return report;
+    }
+
+// Save a new report along with its associated collection.
     async saveReport(
-        file: Express.Multer.File, reportData: UploadReportsDto,
-    ): Promise<Omit<Report, 'file_data'>> {
+        file: Express.Multer.File,
+        reportData: UploadReportsDto,
+    ): Promise<Report> {
 
         if (!file) {
             throw new BadRequestException(
@@ -189,7 +155,7 @@ export class ReportsService {
 
         let collection: Collection | null = null;
 
-        // if user selected both id and new collection name
+        // If the user selected both an existing collection and a new collection name
         if (
             reportData.collection_id &&
             reportData.new_collection_name
@@ -225,7 +191,7 @@ export class ReportsService {
 
             if (!collection) {
                 collection = this.collectionRepository.create({
-                    name: reportData.new_collection_name,
+                    name: collectionName,
                 });
 
                 collection = await this.collectionRepository.save(collection);
@@ -244,22 +210,21 @@ export class ReportsService {
             report_type: reportData.report_type,
             report_date: reportData.report_date,
             Hospital_Or_Diagnostic_Center:
-                reportData.Hospital_Or_Diagnostic_Center,
+            reportData.Hospital_Or_Diagnostic_Center,
             Doctor_name: reportData.Doctor_name,
             tags: reportData.tags,
 
             file_name: file.originalname,
             file_type: file.mimetype,
             file_size: file.size,
-            file_data: file.buffer,
+            file_path: `uploads/reports/${file.filename}`,
 
             collections: [collection],
         });
 
         const savedReport = await this.reportRepository.save(report);
 
-        const { file_data, ...reportResonse } = savedReport;
-        return reportResonse;
+        return savedReport;
     }
 
     // Replace the file attached to an existing report.
@@ -267,7 +232,7 @@ export class ReportsService {
     async replaceReportFile(
         id: number,
         file: Express.Multer.File,
-    ): Promise<Omit<Report, 'file_data'>> {
+    ): Promise<Partial<Report>> {
         if (!file) {
             throw new BadRequestException(
                 this.i18n.translate('validation.NO_FILE_UPLOADED'),
@@ -275,18 +240,26 @@ export class ReportsService {
         }
 
         const report = await this.findById(id);
-        report.file_data = file.buffer;
+        
+        const oldFilePath = report.file_path;
+
         report.file_name = file.originalname;
         report.file_type = file.mimetype;
         report.file_size = file.size;
+        report.file_path = `uploads/${file.filename}`;
 
         const savedReport = await this.reportRepository.save(report);
-        const { file_data, ...reportResponse } = savedReport;
-        return reportResponse;
+
+        return {
+            id:savedReport.id,
+            file_name: savedReport.file_name,
+            file_path: savedReport.file_path,
+            file_type:savedReport.file_type,
+            file_size:savedReport.file_size,
+        }
     }
 
-    // Update an existing report's details.
-
+// Update an existing report's details.
     async updateReport(id: number,
         updateReportDto: UpdateReportDto): Promise<Report> {
 
@@ -354,7 +327,7 @@ export class ReportsService {
         };
     }
 
-    // Archive a report by its ID.
+    //Archive a report by its ID.
     async archiveReport(id: number) {
         const report = await this.findById(id);
 
@@ -362,9 +335,55 @@ export class ReportsService {
 
         await this.reportRepository.save(report);
 
-        const { file_data, ...reportData } = report;
+        const { file_path, ...reportData } = report;
 
         return reportData;
     }
 
+// Get report details 
+    async getReportDetails(id: number) {
+        const report = await this.reportRepository.findOne({
+            where: { id },
+            relations: {
+                collections: true,
+            },
+        });
+
+        if (!report) {
+            throw new NotFoundException(
+                this.i18n.translate('validation.REPORT_NOT_FOUND'),
+            );
+        }
+
+        return {
+            report_name: report.report_name,
+            report_date: report.report_date,
+            uploaded_on: report.createdAt,
+            hospital: report.Hospital_Or_Diagnostic_Center,
+            doctor_name: report.Doctor_name,
+
+            collections: report.collections.map((collection) => ({
+                name: collection.name,
+                updatedAt: collection.updatedAt,
+            })),
+
+            view_url: `http://localhost:3000/${report.file_path.replace(/\\/g, '/')}`,
+
+            activity_history: [
+                {
+                    name: 'Report Uploaded',
+                    created_at: report.createdAt,
+                },
+                {
+
+                    name: 'Details Updated',
+                    created_at: report.updatedAt,
+                },
+                {
+                    name: 'Added to collection',
+                    created_at: report.updatedAt,
+                }
+            ]
+        };
+    }
 }

@@ -41,8 +41,8 @@ export class Report {
   @Column()
   file_size!: number;
 
-  @Column({ type: 'longblob' })
-  file_data!: Buffer;
+  @Column({nullable:true})
+  file_path!: string;
 
   @ManyToMany(() => Collection, (collection) => collection.reports, { nullable: true })
   @JoinTable({

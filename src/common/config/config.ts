@@ -9,7 +9,8 @@ import { UserLogin1789471325599 } from '../../database/migrations/1789471325599-
 import { UserOtp1789472984498 } from '../../database/migrations/1789472984498-UserOtp';
 import { ExpandReportFileData1791289524000 } from '../../database/migrations/1791289524000-ExpandReportFileData';
 import { AddIsArchivedToReport1792746951905 } from '../../database/migrations/1792746951905-AddIsArchivedToReport';
-
+import { MoveReportFilesToLocalStorage1792841706147 } from '../../database/migrations/1792841706147-MoveReportFilesToLocalStorage';
+import { RemoveFileDataFromReport1792996510396 } from '../../database/migrations/1792996510396-RemoveFileDataFromReport';
 
 export function validateEnvironment(environment: Record<string, unknown>): Record<string, unknown> {
   const result = {
@@ -80,6 +81,8 @@ export function databaseOptions(): DataSourceOptions {
       UserOtp1789472984498,
       ExpandReportFileData1791289524000,
       AddIsArchivedToReport1792746951905,
+      MoveReportFilesToLocalStorage1792841706147,
+      RemoveFileDataFromReport1792996510396,
     ],
     migrationsTableName: 'migrations',
     synchronize: false,

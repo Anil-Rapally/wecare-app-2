@@ -14,6 +14,10 @@ import { ResponseExceptionFilter } from './common/filters/response.exceptions';
 import { ReportsModule } from './user/reports/reports.module';
 import { CollectionsModule } from './user/collections/collections.module';
 
+
+import * as express from 'express';
+import { join } from 'path';
+
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.useGlobalPipes(
@@ -25,7 +29,10 @@ async function bootstrap(): Promise<void> {
     }),
   );
 
-  
+  app.use(
+  '/uploads',
+  express.static(join(process.cwd(), 'uploads')),
+);
 
   app.useGlobalFilters(
     new ResponseExceptionFilter(),
