@@ -5,8 +5,8 @@ import {
     ParseIntPipe, Patch, 
     Post, Query, 
     Res, UploadedFile,
-     UseInterceptors, NotFoundException,
-    ValidationPipe
+     UseInterceptors,ValidationPipe,
+    Delete, Put,
 } from '@nestjs/common';
 
 import { ReportsService } from './reports.service';
@@ -26,6 +26,7 @@ import { AddReportToCollectionsDto } from '../dto/add-report-to-collections.dto'
 import { diskStorage } from 'multer';
 import { join, extname } from 'path';
 import { createReadStream, existsSync, mkdirSync } from 'fs';
+import { fileURLToPath } from 'url';
 
 const uploadPath = join(process.cwd(), 'uploads/reports');
 
@@ -121,6 +122,21 @@ export class ReportsController {
         return this.reportsService.getMonthlyCount(year, query.month)
     }
 
+    //global search for reports and collections.
+    @Get('Search')
+    @ApiOperation({
+        summary:'Get all reports from reports and collections'
+    })
+    @ApiResponse({
+        status:200,
+        description:'Report and Collections retrived succesfully'
+    })
+    async globalSearch(
+        @Query('search') query:string,
+    ){
+        return this.reportsService.globalSearch(query)
+    }
+
 // Upload a new report along with its associated collection.
     @ApiExtraModels(UploadReportsDto)
     @Post('Upload')
@@ -196,7 +212,7 @@ export class ReportsController {
     }
 
 // Replace the file attached to an existing medical report.
-    @Patch(':id/file')
+    @Put(':id/file')
     @ApiOperation({
         summary: 'Replace report file',
         description: 'Replace the file attached to an existing medical report.',
@@ -292,19 +308,11 @@ export class ReportsController {
     ) {
         const report = await this.reportsService.findById(id);
 
-        if (!report.file_path || !existsSync(report.file_path)) {
-            throw new NotFoundException('Report file not found');
-        }
+       if(!report ){
+        throw new BadRequestException('File reocrd not found ')
+       }
 
-        res.setHeader('Content-Type', report.file_type);
-        res.setHeader(
-            'Content-Disposition',
-            `attachment; filename="${encodeURIComponent(report.file_name)}"`,
-        );
-
-        const fileStream = createReadStream(report.file_path);
-
-        fileStream.pipe(res);
+       return res.download(report.file_path,report.file_name);
     }
 
 
@@ -423,5 +431,29 @@ export class ReportsController {
         return this.reportsService.getReportDetails(id);
     }
 
+    
+    @Delete(':id')
+    @ApiOperation({
+        summary:'Delete the existing report'
+    })
+    @ApiParam({
+        name:'id',
+        type: Number,
+        example:1,
+        description:'ID of the report',
+    })
+    @ApiResponse({
+        status:200,
+        description: 'Report is deleted'
+    })
+    @ApiResponse({
+        status:404,
+        description:'Report not found',
+    })
+    async deleteReport(
+        @Param('id', ParseIntPipe) id: number,
+    ){
+        return this.reportsService.deleteReport(id);
+    }
 
 }

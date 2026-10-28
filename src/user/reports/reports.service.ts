@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 
 import { In, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -12,6 +12,11 @@ import { ReportsPaginationConfig } from 'src/common/config/reports-pagination.co
 import { paginate, Paginated, PaginateQuery, } from 'nestjs-paginate';
 
 import { I18nService } from 'nestjs-i18n';
+
+import { unlink } from 'fs/promises';
+import { resolve } from 'path';
+import { existsSync } from 'fs';
+import * as fs from 'fs/promises'
 
 type MonthlyReport = {
     totalReport: number;
@@ -64,7 +69,7 @@ export class ReportsService {
         return result;
     }
 
-// Get the count of reports for a specific year and month.
+    // Get the count of reports for a specific year and month.
 
     async getMonthlyCount(year: number, month?: number) {
         const query = this.reportRepository
@@ -127,7 +132,7 @@ export class ReportsService {
         };
     }
 
-// Fetch a report by its ID.
+    // Fetch a report by its ID.
     async findById(id: number): Promise<Report> {
         const report = await this.reportRepository.findOne({
             where: { id },
@@ -141,7 +146,44 @@ export class ReportsService {
         return report;
     }
 
-// Save a new report along with its associated collection.
+    //global search for reports and collections.
+
+    async globalSearch(
+        query: string,
+    ){
+        const searchQuery = query?.trim();
+
+        if(!searchQuery){
+            return{
+                reports:[],
+                collections:[]
+            }
+        }
+
+        const search = `%${searchQuery}%`;
+
+        const [reports,collections] = await Promise.all([
+            this.reportRepository
+            .createQueryBuilder('report')
+            .leftJoinAndSelect('report.collections','Collection')
+            .where('report.report_name LIKE :search',{search})
+            .orWhere('report.Doctor_name LIKE :search',{search})
+            .orWhere('report.Hospital_Or_Diagnostic_center LIKE :search',{search})
+            .orWhere('report.tags LIKE :search',{search})
+            .getMany(),
+
+            this.collectionRepository
+            .createQueryBuilder('collection')
+            .where('collection.name LIKE :search',{search})
+            .getMany()
+        ])
+        return{
+            reports,
+            collections,
+        }
+    }
+
+    // Save a new report along with its associated collection.
     async saveReport(
         file: Express.Multer.File,
         reportData: UploadReportsDto,
@@ -210,7 +252,7 @@ export class ReportsService {
             report_type: reportData.report_type,
             report_date: reportData.report_date,
             Hospital_Or_Diagnostic_Center:
-            reportData.Hospital_Or_Diagnostic_Center,
+                reportData.Hospital_Or_Diagnostic_Center,
             Doctor_name: reportData.Doctor_name,
             tags: reportData.tags,
 
@@ -240,7 +282,8 @@ export class ReportsService {
         }
 
         const report = await this.findById(id);
-        
+
+
         const oldFilePath = report.file_path;
 
         report.file_name = file.originalname;
@@ -250,16 +293,34 @@ export class ReportsService {
 
         const savedReport = await this.reportRepository.save(report);
 
+        if(oldFilePath){
+            const oldAbsoultePath = resolve(process.cwd(),oldFilePath);
+
+            const newAbsoultePath = resolve(process.cwd(),report.file_path);
+
+            if(oldAbsoultePath!== newAbsoultePath){
+                try{
+                    await unlink(oldAbsoultePath);
+                } catch(error){
+                    const err= error as NodeJS.ErrnoException;
+
+                    if(err.code !== 'ENOENT'){
+                        throw error;
+                    }
+                }
+            }
+        }
+
         return {
-            id:savedReport.id,
+            id: savedReport.id,
             file_name: savedReport.file_name,
             file_path: savedReport.file_path,
-            file_type:savedReport.file_type,
-            file_size:savedReport.file_size,
+            file_type: savedReport.file_type,
+            file_size: savedReport.file_size,
         }
     }
 
-// Update an existing report's details.
+    // Update an existing report's details.
     async updateReport(id: number,
         updateReportDto: UpdateReportDto): Promise<Report> {
 
@@ -280,7 +341,6 @@ export class ReportsService {
     }
 
     // Add a report to one or more collections.
-
     async addReportToCollections(
         reportId: number,
         collectionIds: number[],) {
@@ -340,7 +400,7 @@ export class ReportsService {
         return reportData;
     }
 
-// Get report details 
+    // Get report details 
     async getReportDetails(id: number) {
         const report = await this.reportRepository.findOne({
             where: { id },
@@ -385,5 +445,24 @@ export class ReportsService {
                 }
             ]
         };
+    }
+
+    async deleteReport(id: number) {
+        const report = await this.findById(id);
+
+        const file_path = resolve(process.cwd(), report.file_path)
+
+        try {
+            await unlink(file_path);
+        } catch (error) {
+            const err = error as NodeJS.ErrnoException;
+        }
+
+        report.collections = []
+        await this.reportRepository.save(report),
+
+            await this.reportRepository.remove(report);
+
+
     }
 }
