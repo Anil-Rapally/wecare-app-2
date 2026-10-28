@@ -14,7 +14,7 @@ import { Paginate, } from 'nestjs-paginate';
 import type { Paginated, PaginateQuery } from 'nestjs-paginate';
 
 import { MonthlyReportQueryDto } from '../dto/monthly.report.query.dto';
-import { ReportQueryDto, ReportSort } from '../dto/reports.query.dto';
+import { ReportQueryDto, Sort } from '../dto/reports.query.dto';
 import { ApiTags, ApiOperation, ApiExtraModels, ApiResponse, ApiConsumes, ApiBody, getSchemaPath, ApiParam } from '@nestjs/swagger';
 import { UpdateReportDto } from '../dto/update.report.dto';
 import { AddReportToCollectionsDto } from '../dto/add-report-to-collections.dto';
@@ -39,11 +39,11 @@ export class ReportsController {
     ): Promise<Paginated<Report>> {
 
         const sort = reportQueryDto.sort;
-        if (sort === ReportSort.AZ) {
+        if (sort === Sort.AZ) {
             query.sortBy = [['report_name', 'ASC']];
-        } else if (sort === ReportSort.NEWEST) {
+        } else if (sort === Sort.NEWEST) {
             query.sortBy = [['createdAt', 'DESC']];
-        } else if (sort === ReportSort.OLDEST) {
+        } else if (sort === Sort.OLDEST) {
             query.sortBy = [['createdAt', 'ASC']];
         }
 

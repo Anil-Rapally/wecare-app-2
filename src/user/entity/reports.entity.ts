@@ -44,7 +44,7 @@ export class Report {
   @Column({ type: 'longblob' })
   file_data!: Buffer;
 
-  @ManyToMany(() => Collection, (collection) => collection.reports, { nullable: true })
+  @ManyToMany(() => Collection, (collection) => collection.reports, { nullable: true , onDelete: 'CASCADE' },)
   @JoinTable({
     name: 'report_collections',
     joinColumn: {

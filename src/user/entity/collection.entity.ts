@@ -24,4 +24,8 @@ export class Collection {
 
   @UpdateDateColumn()
   updatedAt!: Date;
+
+  @Column({ name: 'is_archived', type: 'boolean', default: false })
+  is_archived!: boolean;
+  
 }

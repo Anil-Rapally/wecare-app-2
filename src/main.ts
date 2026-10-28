@@ -69,6 +69,6 @@ async function bootstrap(): Promise<void> {
   await app.listen(Number(config.getOrThrow<string>('PORT')));
 }
 
-bootstrap().catch(() => {
+bootstrap().catch((error) => {
   process.exitCode = 1;
 });

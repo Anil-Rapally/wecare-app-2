@@ -7,6 +7,7 @@ import { AuthService } from 'src/common/auth/auth.service';
 import { CreateUserDto } from './dto/create_user.dto';
 import { OtpService } from './otp/otp.service';
 import { ConflictException, NotFoundException } from '@nestjs/common';
+import { UpdateUserProfileDto } from './dto/update_user_profile.dto';
 
 @Injectable()
 export class UserService {
@@ -164,5 +165,25 @@ export class UserService {
                 next_step: 'home screen',
             }
         }
+    }
+
+    async updateUserProfile(user_id:string, dto:UpdateUserProfileDto){
+        const user = await this.userRepository.findOne({ where: { id:user_id } })
+        if (!user) throw new NotFoundException({ message: 'validation.user_not_found' });
+        user.email = dto.email;
+        user.phone_number = dto.phone_number;
+        user.full_name = dto.full_name;
+        user.date_of_birth = dto.date_of_birth;
+        user.gender = dto.gender;
+        user.blood_group = dto.blood_group;
+        user.emergency_contact = dto.emergency_contact;
+        user.address = dto.address?.trim();
+        user.is_profile_exists = true;
+        user.updated_at = new Date();
+        const updatedProfile = await this.userRepository.save(user);
+        return {
+            message: 'validation.profile_updated',
+            updatedProfile,
+        };
     }
 }

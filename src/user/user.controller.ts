@@ -26,11 +26,13 @@ import {
   UploadedFile,
   UseGuards,
   UseInterceptors,
+  Patch,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { UsersEntity } from './entity/users.entity';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { UpdateUserProfileDto } from './dto/update_user_profile.dto';
 
 @ApiTags('User')
 @Controller('user')
@@ -226,5 +228,21 @@ export class UserController {
   @UseGuards(AuthGuard)
   skipOnboarding(@CurrentUser() user: UsersEntity) {
     return this.userService.skipSignup(user.id);
+  }
+
+  @ApiOperation({ summary: 'update user profile' })
+  @ApiBearerAuth('access-token')
+  @ApiResponse({
+    status: 200,
+    description: 'user profile updated',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Missing or invalid access token',
+  })
+  @Patch('updateprofile')
+  @UseGuards(AuthGuard)
+  updateProfile(@CurrentUser() user: UsersEntity, @Body() dto: UpdateUserProfileDto) {
+    return this.userService.updateUserProfile(user.id, dto);
   }
 }

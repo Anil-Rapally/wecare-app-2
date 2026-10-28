@@ -7,7 +7,7 @@ import { Type } from "class-transformer";
 import { i18nValidationMessage } from "nestjs-i18n";
 import {  ApiPropertyOptional } from "@nestjs/swagger";
 
-export enum ReportSort{
+export enum Sort{
     AZ = 'A-Z',
     NEWEST = 'Newest',
     OLDEST = 'Oldest'
@@ -65,12 +65,12 @@ export class ReportQueryDto{
 
 
     @ApiPropertyOptional({
-        enum: ReportSort,
+        enum: Sort,
         description: 'Sort reports ',
     })
     @IsOptional()
-    @IsEnum(ReportSort)
-    sort?: ReportSort;
+    @IsEnum(Sort)
+    sort?: Sort;
 
 
     @ApiPropertyOptional({

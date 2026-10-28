@@ -8,7 +8,7 @@ import { Collection } from '../entity/collection.entity';
 import { UploadReportsDto } from '../dto/upload.reports.dto';
 import { UpdateReportDto } from '../dto/update.report.dto';
 
-import { ReportsPaginationConfig } from 'src/common/config/reports-pagination.config';
+import { ReportsPaginationConfig } from '../../common/config/reports-pagination.config';
 import { paginate, Paginated, PaginateQuery, } from 'nestjs-paginate';
 
 import { I18nService } from 'nestjs-i18n';
