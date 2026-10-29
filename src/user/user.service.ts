@@ -23,7 +23,6 @@ export class UserService {
         const value = login_dto.email || login_dto.phone_number;
 
         if (!login_dto.otp) {
-            console.log('otp genertion called');
             return await this.optService.generateOtp(value);
         }
 
@@ -92,6 +91,7 @@ export class UserService {
         };
     }
 
+
     async uploadProfilePhoto(user_id: string, file: Express.Multer.File) {
         if (!file) {
             return {
@@ -100,9 +100,16 @@ export class UserService {
                 nextStep: 'userprofile',
             };
         }
+
         const result = await this.userRepository.update(
-            { id: user_id }, { is_profile_exists: true, profile_photo: file.buffer, is_photo_exists: true, }
+            { id: user_id },
+            {
+                is_profile_exists: true,
+                profile_photo_path: `uploads/photos/${file.filename}`,
+                is_photo_exists: true,
+            },
         );
+
         return {
             result,
             message: 'validation.profile_updated',
@@ -111,6 +118,7 @@ export class UserService {
             nextStep: 'dashboard',
         };
     }
+
 
     publicUser(user: UsersEntity) {
         return {
@@ -123,24 +131,35 @@ export class UserService {
             blood_group: user.blood_group,
             emergency_contact: user.emergency_contact,
             address: user.address,
-            profile_photo: user.profile_photo,
+            profile_photo: user.profile_photo_path,
             created_at: user.created_at,
             updated_at: user.updated_at,
         };
     }
 
 
-    async getProfilePhoto(userId: string): Promise<Buffer> {
+
+    async getProfilePhoto(userId: string) {
         const user = await this.userRepository.findOne({
             where: { id: userId },
             select: {
                 id: true,
-                profile_photo: true,
+                profile_photo_path: true,
             },
         });
-        if (!user?.profile_photo) throw new NotFoundException({ message: 'validation.no_profile_photo' });
-        return user.profile_photo;
+
+        if (!user?.profile_photo_path) {
+            throw new NotFoundException({
+                message: 'validation.no_profile_photo',
+            });
+        }
+
+        return {
+            view_url: `http://localhost:3000/${user.profile_photo_path.replace(/\\/g, '/')}`,
+        };
     }
+
+
 
 
     async skipSignup(userId: string) {

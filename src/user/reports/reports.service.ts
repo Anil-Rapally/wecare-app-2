@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 
 import { In, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -12,6 +12,11 @@ import { ReportsPaginationConfig } from '../../common/config/reports-pagination.
 import { paginate, Paginated, PaginateQuery, } from 'nestjs-paginate';
 
 import { I18nService } from 'nestjs-i18n';
+
+import { unlink } from 'fs/promises';
+import { resolve } from 'path';
+import { existsSync } from 'fs';
+import * as fs from 'fs/promises'
 
 type MonthlyReport = {
     totalReport: number;
@@ -58,58 +63,10 @@ export class ReportsService {
                 return {
                     ...report,
                     collections: fullReport?.collections ?? [],
-                    download_url: `/reports/download/${report.id}`,
                 };
             }),
         );
         return result;
-    }
-
-    // Fetch a report by its ID.
-
-    async findById(id: number): Promise<Report> {
-        const report = await this.reportRepository.findOne({
-            where: { id },
-        });
-
-        if (!report) {
-            throw new NotFoundException(
-                this.i18n.translate('validation.REPORT_NOT_FOUND'),
-            );
-        }
-        return report;
-    }
-
-    // Get report details 
-    async getReportDetails(id: number) {
-        const report = await this.reportRepository.findOne({
-            where: { id },
-            relations: {
-                collections: true,
-            },
-        });
-
-        if (!report) {
-            throw new NotFoundException(
-                this.i18n.translate('validation.REPORT_NOT_FOUND'),
-            );
-        }
-
-        return {
-            report_name: report.report_name,
-            uploaded_on: report.createdAt,
-            hospital: report.Hospital_Or_Diagnostic_Center,
-            doctor_name: report.Doctor_name,
-
-            collections: report.collections.map((collection) => ({
-                name: collection.name,
-                updatedAt: collection.updatedAt,
-            })),
-
-            // file_type: report.file_type,
-            // file_name: report.file_name,
-            file_data: report.file_data.toString('base64'),
-        };
     }
 
     // Get the count of reports for a specific year and month.
@@ -175,11 +132,62 @@ export class ReportsService {
         };
     }
 
-    // Save a new report along with its associated collection.
+    // Fetch a report by its ID.
+    async findById(id: number): Promise<Report> {
+        const report = await this.reportRepository.findOne({
+            where: { id },
+        });
 
+        if (!report) {
+            throw new NotFoundException(
+                this.i18n.translate('validation.REPORT_NOT_FOUND'),
+            );
+        }
+        return report;
+    }
+
+    //global search for reports and collections.
+
+    async globalSearch(
+        query: string,
+    ){
+        const searchQuery = query?.trim();
+
+        if(!searchQuery){
+            return{
+                reports:[],
+                collections:[]
+            }
+        }
+
+        const search = `%${searchQuery}%`;
+
+        const [reports,collections] = await Promise.all([
+            this.reportRepository
+            .createQueryBuilder('report')
+            .leftJoinAndSelect('report.collections','Collection')
+            .where('report.report_name LIKE :search',{search})
+            .orWhere('report.Doctor_name LIKE :search',{search})
+            .orWhere('report.Hospital_Or_Diagnostic_center LIKE :search',{search})
+            .orWhere('report.tags LIKE :search',{search})
+            .getMany(),
+
+            this.collectionRepository
+            .createQueryBuilder('collection')
+            .where('collection.name LIKE :search',{search})
+            .getMany()
+        ])
+        return{
+            reports,
+            collections,
+        }
+    }
+
+    // Save a new report along with its associated collection.
     async saveReport(
-        file: Express.Multer.File, reportData: UploadReportsDto,
-    ): Promise<Omit<Report, 'file_data'>> {
+        file: Express.Multer.File,
+        reportData: UploadReportsDto,
+    ): Promise<Report> {
 
         if (!file) {
             throw new BadRequestException(
@@ -189,7 +197,7 @@ export class ReportsService {
 
         let collection: Collection | null = null;
 
-        // if user selected both id and new collection name
+        // If the user selected both an existing collection and a new collection name
         if (
             reportData.collection_id &&
             reportData.new_collection_name
@@ -225,7 +233,7 @@ export class ReportsService {
 
             if (!collection) {
                 collection = this.collectionRepository.create({
-                    name: reportData.new_collection_name,
+                    name: collectionName,
                 });
 
                 collection = await this.collectionRepository.save(collection);
@@ -251,15 +259,14 @@ export class ReportsService {
             file_name: file.originalname,
             file_type: file.mimetype,
             file_size: file.size,
-            file_data: file.buffer,
+            file_path: `uploads/reports/${file.filename}`,
 
             collections: [collection],
         });
 
         const savedReport = await this.reportRepository.save(report);
 
-        const { file_data, ...reportResonse } = savedReport;
-        return reportResonse;
+        return savedReport;
     }
 
     // Replace the file attached to an existing report.
@@ -267,7 +274,7 @@ export class ReportsService {
     async replaceReportFile(
         id: number,
         file: Express.Multer.File,
-    ): Promise<Omit<Report, 'file_data'>> {
+    ): Promise<Partial<Report>> {
         if (!file) {
             throw new BadRequestException(
                 this.i18n.translate('validation.NO_FILE_UPLOADED'),
@@ -275,18 +282,45 @@ export class ReportsService {
         }
 
         const report = await this.findById(id);
-        report.file_data = file.buffer;
+
+
+        const oldFilePath = report.file_path;
+
         report.file_name = file.originalname;
         report.file_type = file.mimetype;
         report.file_size = file.size;
+        report.file_path = `uploads/${file.filename}`;
 
         const savedReport = await this.reportRepository.save(report);
-        const { file_data, ...reportResponse } = savedReport;
-        return reportResponse;
+
+        if(oldFilePath){
+            const oldAbsoultePath = resolve(process.cwd(),oldFilePath);
+
+            const newAbsoultePath = resolve(process.cwd(),report.file_path);
+
+            if(oldAbsoultePath!== newAbsoultePath){
+                try{
+                    await unlink(oldAbsoultePath);
+                } catch(error){
+                    const err= error as NodeJS.ErrnoException;
+
+                    if(err.code !== 'ENOENT'){
+                        throw error;
+                    }
+                }
+            }
+        }
+
+        return {
+            id: savedReport.id,
+            file_name: savedReport.file_name,
+            file_path: savedReport.file_path,
+            file_type: savedReport.file_type,
+            file_size: savedReport.file_size,
+        }
     }
 
     // Update an existing report's details.
-
     async updateReport(id: number,
         updateReportDto: UpdateReportDto): Promise<Report> {
 
@@ -307,7 +341,6 @@ export class ReportsService {
     }
 
     // Add a report to one or more collections.
-
     async addReportToCollections(
         reportId: number,
         collectionIds: number[],) {
@@ -354,7 +387,7 @@ export class ReportsService {
         };
     }
 
-    // Archive a report by its ID.
+    //Archive a report by its ID.
     async archiveReport(id: number) {
         const report = await this.findById(id);
 
@@ -362,9 +395,74 @@ export class ReportsService {
 
         await this.reportRepository.save(report);
 
-        const { file_data, ...reportData } = report;
+        const { file_path, ...reportData } = report;
 
         return reportData;
     }
 
+    // Get report details 
+    async getReportDetails(id: number) {
+        const report = await this.reportRepository.findOne({
+            where: { id },
+            relations: {
+                collections: true,
+            },
+        });
+
+        if (!report) {
+            throw new NotFoundException(
+                this.i18n.translate('validation.REPORT_NOT_FOUND'),
+            );
+        }
+
+        return {
+            report_name: report.report_name,
+            report_date: report.report_date,
+            uploaded_on: report.createdAt,
+            hospital: report.Hospital_Or_Diagnostic_Center,
+            doctor_name: report.Doctor_name,
+
+            collections: report.collections.map((collection) => ({
+                name: collection.name,
+                updatedAt: collection.updatedAt,
+            })),
+
+            view_url: `http://localhost:3000/${report.file_path.replace(/\\/g, '/')}`,
+
+            activity_history: [
+                {
+                    name: 'Report Uploaded',
+                    created_at: report.createdAt,
+                },
+                {
+
+                    name: 'Details Updated',
+                    created_at: report.updatedAt,
+                },
+                {
+                    name: 'Added to collection',
+                    created_at: report.updatedAt,
+                }
+            ]
+        };
+    }
+
+    async deleteReport(id: number) {
+        const report = await this.findById(id);
+
+        const file_path = resolve(process.cwd(), report.file_path)
+
+        try {
+            await unlink(file_path);
+        } catch (error) {
+            const err = error as NodeJS.ErrnoException;
+        }
+
+        report.collections = []
+        await this.reportRepository.save(report),
+
+            await this.reportRepository.remove(report);
+
+
+    }
 }

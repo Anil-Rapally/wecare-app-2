@@ -21,8 +21,12 @@ export class AuthGuard implements CanActivate {
             });
             const user_id = payload.sub;
             request.authUser = { id: user_id, ...payload } as UsersEntity;
-        } catch {
-            throw new UnauthorizedException({ message: 'validation.invalid_token' });
+        } catch (error) {
+
+
+            throw new UnauthorizedException({
+                message: 'validation.invalid_token',
+            });
         }
         return true;
     }

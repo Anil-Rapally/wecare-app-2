@@ -6,13 +6,17 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { I18nValidationPipe } from 'nestjs-i18n';
-import { ResponseInterceptor } from './common/interceptors/response.interceptor';
+import { ResponseInterceptor } from './common/interceptors/Response.interceptor';
 import { ValidationExceptionFilter } from './common/filters/validation_exception.filter';
 import { HttpExceptionFilter } from './common/filters/http_exception.filter';
 import { I18nService } from 'nestjs-i18n';
 import { ResponseExceptionFilter } from './common/filters/response.exceptions';
 import { CollectionsModule } from './user/collections/collections.module';
 import { ReportsModule } from './user/reports/reports.module';
+
+
+import * as express from 'express';
+import { join } from 'path';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -23,6 +27,11 @@ async function bootstrap(): Promise<void> {
       forbidNonWhitelisted: true,
     }),
   );
+
+  app.use(
+  '/uploads',
+  express.static(join(process.cwd(), 'uploads')),
+);
 
   app.useGlobalFilters(
     new ResponseExceptionFilter(),

@@ -57,8 +57,8 @@ export class UsersEntity {
     @Column({ type: 'varchar', length: 500, nullable: true })
     address?: string;
 
-    @Column({ type: 'mediumblob', nullable: true, select: false })
-    profile_photo: Buffer | null;
+    @Column({ nullable: true, })
+    profile_photo_path: string;
 
     @Column({ default: false })
     is_profile_exists: boolean;

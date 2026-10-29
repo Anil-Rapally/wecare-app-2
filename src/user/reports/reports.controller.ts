@@ -1,7 +1,12 @@
 import {
-    Body, Controller, FileTypeValidator,
-    Get, MaxFileSizeValidator, Param, ParseFilePipe,
-    ParseIntPipe, Patch, Post, Query, Res, UploadedFile, UseInterceptors,
+    BadRequestException,
+    Body, Controller, 
+    Get, Param, 
+    ParseIntPipe, Patch, 
+    Post, Query, 
+    Res, UploadedFile,
+     UseInterceptors,ValidationPipe,
+    Delete, Put,
 } from '@nestjs/common';
 
 import { ReportsService } from './reports.service';
@@ -18,7 +23,27 @@ import { ReportQueryDto, Sort } from '../dto/reports.query.dto';
 import { ApiTags, ApiOperation, ApiExtraModels, ApiResponse, ApiConsumes, ApiBody, getSchemaPath, ApiParam } from '@nestjs/swagger';
 import { UpdateReportDto } from '../dto/update.report.dto';
 import { AddReportToCollectionsDto } from '../dto/add-report-to-collections.dto';
+import { diskStorage } from 'multer';
+import { join, extname } from 'path';
+import { createReadStream, existsSync, mkdirSync } from 'fs';
+import { fileURLToPath } from 'url';
 
+const uploadPath = join(process.cwd(), 'uploads/reports');
+
+if (!existsSync(uploadPath)) {
+    mkdirSync(uploadPath, { recursive: true });
+}
+
+const storage = diskStorage({
+    destination: uploadPath,
+    filename: (req, file, callback) => {
+        const uniqueName =
+            `${Date.now()}-${Math.round(Math.random() * 1e9)}` +
+            extname(file.originalname);
+
+        callback(null, uniqueName);
+    },
+});
 
 @ApiTags('Reports-Feature')
 @Controller('reports')
@@ -26,7 +51,7 @@ export class ReportsController {
 
     constructor(private reportsService: ReportsService) { }
 
-    // Fetch all reports with pagination, sorting, and filtering.
+// Fetch all reports with pagination, sorting, and filtering.
     @Get()
     @ApiOperation({ summary: 'Get all Reports' })
     @ApiResponse({
@@ -97,8 +122,22 @@ export class ReportsController {
         return this.reportsService.getMonthlyCount(year, query.month)
     }
 
+    //global search for reports and collections.
+    @Get('Search')
+    @ApiOperation({
+        summary:'Get all reports from reports and collections'
+    })
+    @ApiResponse({
+        status:200,
+        description:'Report and Collections retrived succesfully'
+    })
+    async globalSearch(
+        @Query('search') query:string,
+    ){
+        return this.reportsService.globalSearch(query)
+    }
 
-    // Upload a new report along with its associated collection.
+// Upload a new report along with its associated collection.
     @ApiExtraModels(UploadReportsDto)
     @Post('Upload')
     @ApiOperation({
@@ -139,75 +178,41 @@ export class ReportsController {
         status: 404,
         description: 'Collection not found.',
     })
-    @UseInterceptors(FileInterceptor('file'))
-    uploadReport(
-        @UploadedFile(
-            new ParseFilePipe({
-                validators: [
-                    new MaxFileSizeValidator({
-                        maxSize: 1024 * 1024 * 25,
-                        message: 'File is too large! Maximum allowed size is 25MB',
-                    }),
+    @UseInterceptors(FileInterceptor('file', {
+        storage,
+        limits: {
+            fileSize: 25 * 1024 * 1024,
+        },
+        fileFilter: (req, file, callback) => {
 
-                    new FileTypeValidator({
-                        fileType: '.(jpg|jpeg|png|pdf)',
-                        errorMessage:
-                            'Invalid file format, only JPG, JPEG, PNG and PDF are allowed',
-                    }),
-                ],
-            }),
-        )
+            const allowedTypes = [
+                'application/pdf',
+                'image/jpeg',
+                'image/png',
+            ]
+            if (allowedTypes.includes(file.mimetype)) {
+                callback(null, true);
+            } else {
+                callback(
+                    new BadRequestException(
+                        'Only PDF,JPG,JPEG and PNG files are allowed',
+                    ),
+                    false,
+                )
+            }
+        }
+    }))
+    uploadReport(
+        @UploadedFile()
         file: Express.Multer.File,
 
-        @Body() body: UploadReportsDto,
+        @Body(new ValidationPipe()) body: UploadReportsDto,
     ) {
         return this.reportsService.saveReport(file, body);
     }
 
-    // Download the uploaded report file as an attachment.
-
-    @Get('download/:id')
-    @ApiOperation({
-        summary: 'Download uploaded report',
-        description: 'Download an uploaded medical report.',
-    })
-    @ApiParam({
-        name: 'id',
-        type: Number,
-        example: 1,
-        description: 'Report ID.',
-    })
-    @ApiResponse({
-        status: 200,
-        description: 'Report downloaded successfully.',
-    })
-    @ApiResponse({
-        status: 400,
-        description: 'Invalid report ID.',
-    })
-    @ApiResponse({
-        status: 404,
-        description: 'Report not found.',
-    })
-    async downloadReportFile(
-        @Param('id', ParseIntPipe) id: number,
-        @Res() res: Response,
-    ) {
-        const report = await this.reportsService.findById(id);
-
-        res.setHeader('Content-Type', report.file_type);
-
-        res.setHeader(
-            'Content-Disposition',
-            `attachment; filename="${encodeURIComponent(report.file_name)}"`,
-        );
-
-        res.send(report.file_data);
-    }
-
-    // Replace the file attached to an existing medical report.
-
-    @Patch(':id/file')
+// Replace the file attached to an existing medical report.
+    @Put(':id/file')
     @ApiOperation({
         summary: 'Replace report file',
         description: 'Replace the file attached to an existing medical report.',
@@ -244,31 +249,74 @@ export class ReportsController {
         status: 404,
         description: 'Report not found.',
     })
-    @UseInterceptors(FileInterceptor('file'))
+    @UseInterceptors(FileInterceptor('file', {
+        storage,
+        limits: {
+            fileSize: 25 * 1024 * 1024,
+        },
+        fileFilter: (req, file, callback) => {
+            const allowedTypes = [
+                'application/pdf',
+                'image/jpeg',
+                'image/png',
+            ]
+            if (allowedTypes.includes(file.mimetype)) {
+                callback(null, true);
+            } else {
+                callback(
+                    new BadRequestException(
+                        'Only PDF,JPG,JPEG and PNG files are allowed',
+                    ),
+                    false,
+                )
+            }
+        }
+    }))
     replaceReportFile(
         @Param('id', ParseIntPipe) id: number,
-        @UploadedFile(
-            new ParseFilePipe({
-                validators: [
-                    new MaxFileSizeValidator({
-                        maxSize: 1024 * 1024 * 25,
-                        message: 'File is too large! Maximum allowed size is 25MB',
-                    }),
-                    new FileTypeValidator({
-                        fileType: '.(jpg|jpeg|png|pdf)',
-                        errorMessage:
-                            'Invalid file format, only JPG, JPEG, PNG and PDF are allowed',
-                    }),
-                ],
-            }),
-        )
+        @UploadedFile()
         file: Express.Multer.File,
     ) {
         return this.reportsService.replaceReportFile(id, file);
     }
 
-    // Update the details of an existing medical report.
+ 
+    // Download the uploaded report file as an attachment.
 
+    @Get('download/:id')
+    @ApiOperation({
+        summary: 'Download uploaded report',
+        description: 'Download a report from local storage.',
+    })
+    @ApiParam({
+        name: 'id',
+        type: Number,
+        example: 1,
+        description: 'ID of the report',
+    })
+    @ApiResponse({
+        status: 200,
+        description: 'Report downloaded successfully.',
+    })
+    @ApiResponse({
+        status: 404,
+        description: 'Report or file not found.',
+    })
+    async downloadReportFile(
+        @Param('id', ParseIntPipe) id: number,
+        @Res() res: Response,
+    ) {
+        const report = await this.reportsService.findById(id);
+
+       if(!report ){
+        throw new BadRequestException('File reocrd not found ')
+       }
+
+       return res.download(report.file_path,report.file_name);
+    }
+
+
+// Update the details of an existing medical report.
     @Patch(':id')
     @ApiOperation({
         summary: 'Update report details',
@@ -300,8 +348,7 @@ export class ReportsController {
     }
 
 
-    // Add a report to one or more collections.
-
+// Add a report to one or more collections.
     @Post(':id/collections')
     @ApiOperation({
         summary: 'Add report to collections',
@@ -332,7 +379,7 @@ export class ReportsController {
         return await this.reportsService.addReportToCollections(id, addReportToCollectionsDto.collection_ids);
     }
 
-    // add reports   to Archive 
+    // // add reports   to Archive 
     @Patch(':id/archive')
     @ApiOperation({
         summary: 'Archive a report by ID'
@@ -359,7 +406,7 @@ export class ReportsController {
         };
     }
 
-// Get details of the report 
+    // Get details of the report 
     @Get(':id/details')
     @ApiOperation({
         summary: 'Get report details and collections',
@@ -384,5 +431,29 @@ export class ReportsController {
         return this.reportsService.getReportDetails(id);
     }
 
+    
+    @Delete(':id')
+    @ApiOperation({
+        summary:'Delete the existing report'
+    })
+    @ApiParam({
+        name:'id',
+        type: Number,
+        example:1,
+        description:'ID of the report',
+    })
+    @ApiResponse({
+        status:200,
+        description: 'Report is deleted'
+    })
+    @ApiResponse({
+        status:404,
+        description:'Report not found',
+    })
+    async deleteReport(
+        @Param('id', ParseIntPipe) id: number,
+    ){
+        return this.reportsService.deleteReport(id);
+    }
 
 }

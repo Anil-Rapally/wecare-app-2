@@ -29,10 +29,32 @@ import {
   Patch,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { memoryStorage } from 'multer';
+import { diskStorage, memoryStorage } from 'multer';
 import { UsersEntity } from './entity/users.entity';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+<<<<<<< HEAD
 import { UpdateUserProfileDto } from './dto/update_user_profile.dto';
+=======
+import { join, extname } from 'path';
+import { existsSync, mkdirSync } from 'fs';
+
+const uploadPath = join(process.cwd(), 'uploads/photos');
+
+if (!existsSync(uploadPath)) {
+  mkdirSync(uploadPath, { recursive: true });
+}
+
+const storage = diskStorage({
+  destination: uploadPath,
+  filename: (req, file, callback) => {
+    const uniqueName =
+      `${Date.now()}-${Math.round(Math.random() * 1e9)}` +
+      extname(file.originalname);
+
+    callback(null, uniqueName);
+  },
+});
+>>>>>>> origin/feat/reports
 
 @ApiTags('User')
 @Controller('user')
@@ -129,8 +151,11 @@ export class UserController {
   @UseGuards(AuthGuard)
   @UseInterceptors(
     FileInterceptor('file', {
-      storage: memoryStorage(),
+      storage,
       limits: { files: 1, fields: 0, fileSize: 2 * 1024 * 1024 },
+      fileFilter: (req, file, callback) => {
+        callback(null, true);
+      },
     }),
   )
   uploadPhoto(
@@ -138,13 +163,14 @@ export class UserController {
     @UploadedFile(
       new ParseFilePipe({
         fileIsRequired: true,
-        exceptionFactory: (message) =>
-          new BadRequestException({
+        exceptionFactory: (message) => {
+          return new BadRequestException({
             message:
               message === 'File is required'
                 ? 'validation.upload_photo_required'
                 : message,
-          }),
+          });
+        },
         validators: [
           new MaxFileSizeValidator({
             maxSize: 2 * 1024 * 1024,
@@ -152,6 +178,7 @@ export class UserController {
           }),
           new FileTypeValidator({
             fileType: /^image\/(jpeg|png|webp)$/,
+            skipMagicNumbersValidation: true,
             errorMessage: 'validation.upload_photo_format',
           }),
         ],
@@ -159,6 +186,7 @@ export class UserController {
     )
     file: Express.Multer.File,
   ) {
+
     return this.userService.uploadProfilePhoto(user.id, file);
   }
 
@@ -185,10 +213,6 @@ export class UserController {
     };
   }
 
-
-
-
-
   @ApiOperation({ summary: 'Get the authenticated user profile photo' })
   @ApiBearerAuth('access-token')
   @ApiProduces('image/jpeg')
@@ -212,17 +236,13 @@ export class UserController {
     status: 401,
     description: 'Missing or invalid access token',
   })
+
   @Get('userprofilephoto')
   @Header('Cache-Control', 'no-store')
-  @Header('X-Content-Type-Options', 'nosniff')
   @UseGuards(AuthGuard)
   async getPhoto(@CurrentUser() user: UsersEntity) {
-    return new StreamableFile(await this.userService.getProfilePhoto(user.id), {
-      type: 'image/jpeg',
-      disposition: 'inline; filename="profile.jpg"',
-    });
+    return this.userService.getProfilePhoto(user.id);
   }
-
 
   @Post('skip')
   @UseGuards(AuthGuard)

@@ -3,9 +3,15 @@ import { UsersEntity } from '../../user/entity/users.entity';
 import { UsersLogin1791350158931 } from '../../database/migrations/1791350158931-UsersLogin';
 import { ExpandReportFileData1791289524000 } from '../../database/migrations/1791289524000-ExpandReportFileData';
 import { AddIsArchivedToReport1792746951905 } from '../../database/migrations/1792746951905-AddIsArchivedToReport';
+
+import { MoveReportFilesToLocalStorage1792841706147 } from '../../database/migrations/1792841706147-MoveReportFilesToLocalStorage';
+import { RemoveFileDataFromReport1792996510396 } from '../../database/migrations/1792996510396-RemoveFileDataFromReport';
+import { ChangeReportCollectionRelationship1791780243903 } from 'src/database/migrations/1791780243903-ChangeReportCollectionRelationship';
+import { AddNotesToReport1791372932013 } from 'src/database/migrations/1791372932013-AddNotesToReport';
+
+
 import { Report } from 'src/user/entity/reports.entity';
 import { Collection } from 'src/user/entity/collection.entity';
-
 
 export function validateEnvironment(environment: Record<string, unknown>): Record<string, unknown> {
   const result = {
@@ -71,7 +77,15 @@ export function databaseOptions(): DataSourceOptions {
     charset: 'utf8mb4_unicode_ci',
     timezone: 'Z',
     entities: [UsersEntity, Report, Collection,],
-    migrations: [UsersLogin1791350158931, ExpandReportFileData1791289524000, AddIsArchivedToReport1792746951905,],
+    migrations: [
+     UsersLogin1791350158931,
+      ExpandReportFileData1791289524000,
+      AddIsArchivedToReport1792746951905,
+      MoveReportFilesToLocalStorage1792841706147,
+      RemoveFileDataFromReport1792996510396,
+      AddNotesToReport1791372932013,
+      ChangeReportCollectionRelationship1791780243903,
+    ],
     migrationsTableName: 'migrations',
     synchronize: false,
     migrationsRun: false,
