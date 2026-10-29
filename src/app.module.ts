@@ -8,7 +8,7 @@ import { I18nModule, AcceptLanguageResolver, I18nJsonLoader } from 'nestjs-i18n'
 import { join } from 'node:path';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RedisModule } from './common/redis/redis.module';
-import { ResponseInterceptor } from './common/interceptors/Response.interceptor';
+import { ResponseInterceptor } from './common/interceptors/response.interceptor'
 import { ReportsModule } from './user/reports/reports.module';
 import { CollectionsModule } from './user/collections/collections.module';
 

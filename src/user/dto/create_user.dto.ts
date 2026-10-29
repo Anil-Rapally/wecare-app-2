@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsEnum, IsOptional, IsString, MaxLength, IsPhoneNumber, IsDate, MinDate, MaxDate, IsAlpha } from 'class-validator';
+import { IsNotEmpty, IsEnum, IsOptional, IsString, MaxLength, IsPhoneNumber, IsDate, MinDate, MaxDate, IsAlpha, MinLength, Matches } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Gender, BloodGroup } from '../entity/users.entity';
@@ -11,13 +11,13 @@ const getMinAgeLimit = () => {
 
 export class CreateUserDto {
 
-    
-
     @ApiProperty({ example: "UserName" })
     @Transform(({ value }) => typeof value === 'string' ? value.trim() : value)
     @IsNotEmpty({ message:'validation.enter_name' })
     @IsString({ message: 'validation.name_invalid' })
     @IsAlpha('en-US', { message: 'validation.name_invalid' })
+    @MinLength(1,{message: 'validation.name_min'})
+    @MaxLength(70,{message:'validation.name_max'})
     full_name: string;
 
     @ApiProperty({ example: "2000-01-01" })
@@ -26,6 +26,7 @@ export class CreateUserDto {
     @IsDate({ message:'validation.valid_dob' })
     @MinDate(getMinAgeLimit(), { message:'validation.valid_dob' })
     @MaxDate(new Date(), { message:'validation.valid_dob' })
+    @Matches(/^\d{4}-\d{2}-\d{2}$/, {message: 'validation.dob_format'})
     date_of_birth: string;
 
     @ApiProperty({ example: 'male' })

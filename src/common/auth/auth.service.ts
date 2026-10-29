@@ -15,7 +15,7 @@ export class AuthService {
     ) { }
 
     async issue_jwt(user_id: string){
-        const expires_in = 300;
+        const expires_in = 3000;
         const token = await this.jwt.signAsync(
             {sub: user_id,},
             {

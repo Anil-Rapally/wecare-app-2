@@ -32,9 +32,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage, memoryStorage } from 'multer';
 import { UsersEntity } from './entity/users.entity';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
-<<<<<<< HEAD
 import { UpdateUserProfileDto } from './dto/update_user_profile.dto';
-=======
 import { join, extname } from 'path';
 import { existsSync, mkdirSync } from 'fs';
 
@@ -54,7 +52,6 @@ const storage = diskStorage({
     callback(null, uniqueName);
   },
 });
->>>>>>> origin/feat/reports
 
 @ApiTags('User')
 @Controller('user')
@@ -207,10 +204,7 @@ export class UserController {
   @Header('Cache-Control', 'no-store')
   @UseGuards(AuthGuard)
   getProfile(@CurrentUser() user: UsersEntity) {
-    return {
-      message: 'validation.profile_retrieved',
-      ...this.userService.publicUser(user),
-    };
+    return this.userService.publicUser(user.id);
   }
 
   @ApiOperation({ summary: 'Get the authenticated user profile photo' })

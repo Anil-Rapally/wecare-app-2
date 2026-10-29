@@ -83,11 +83,11 @@ export class UserService {
         return {
             message: 'validation.profile_created',
             is_profile_exists: user.is_profile_exists,
-            access_token: issued.token,
+            token: issued.token,
             token_type: 'Bearer',
             expires_in: issued.expires_in,
             next_step: 'uploadphoto' as const,
-            user: this.publicUser(user),
+            user: this.publicUser(user.id),
         };
     }
 
@@ -120,7 +120,11 @@ export class UserService {
     }
 
 
-    publicUser(user: UsersEntity) {
+    async publicUser(user_id:string) {
+        const user = await this.userRepository.findOne({where:{id:user_id}})
+        if(!user){
+            throw new NotFoundException({message:'validation.user_not_found'})
+        }
         return {
             id: user.id,
             email: user.email,
@@ -169,7 +173,7 @@ export class UserService {
             const issued = await this.authService.issue_jwt(user.id);
             return {
                 message: 'validation.profile_skiped',
-                access_token: issued.token,
+                token: issued.token,
                 expires_in: issued.expires_in,
                 next_step: 'home screen',
             }
@@ -179,7 +183,7 @@ export class UserService {
             const issued = await this.authService.issue_jwt(user.id);
             return {
                 message: 'validation.photo_skiped',
-                access_token: issued.token,
+                token: issued.token,
                 expires_in: issued.expires_in,
                 next_step: 'home screen',
             }

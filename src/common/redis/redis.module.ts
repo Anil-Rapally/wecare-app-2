@@ -12,7 +12,7 @@ import Redis from 'ioredis';
         const redis = new Redis(
           configService.get<string>(
             'REDIS_URL',
-            'redis://localhost:8088',
+            'redis://localhost:6379',
           ),
         );
 

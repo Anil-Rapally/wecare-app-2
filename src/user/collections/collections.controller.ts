@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseIntPipe, Patch, Query } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseIntPipe, Patch, Post, Query, UploadedFile, UseInterceptors, ValidationPipe } from '@nestjs/common';
 import { CollectionsService } from './collections.service';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { Collection } from '../entity/collection.entity';
@@ -9,6 +9,9 @@ import { RenameCollectionDto } from '../dto/rename_collections.dto';
 import { EditCollectionsDto } from '../dto/edit_collections.dto';
 import { Sort } from '../dto/reports.query.dto';
 import { RemoveReportsFromCollectionDto } from '../dto/remove_reports_from_collection.dto';
+import { CreateCollectionDto } from '../dto/create_collection.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { storage } from '../reports/reports.controller';
 
 @ApiTags('Collections')
 @Controller('collections')
@@ -145,6 +148,28 @@ export class CollectionsController {
 
         return await this.collectionsService.removeReportsFromCollection(id, removeReportsFromCollectionDto.report_ids);
     }
+
+
+    @Post('create')
+    @ApiOperation({
+        summary: 'Create collections'
+    })
+    @ApiResponse({
+        status: 200,
+        description: 'collection created successfully.',
+    })
+    @ApiResponse({
+        status: 400,
+        description: 'Invalid collection ID.',
+    })
+    @ApiResponse({
+        status: 404,
+        description: 'Report or collections not found.',
+    })
+    async createCollection( @Body() body: CreateCollectionDto) {
+        return this.collectionsService.createCollection( body);
+    }
+
 
 }
 

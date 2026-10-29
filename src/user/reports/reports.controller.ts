@@ -34,7 +34,7 @@ if (!existsSync(uploadPath)) {
     mkdirSync(uploadPath, { recursive: true });
 }
 
-const storage = diskStorage({
+export const storage = diskStorage({
     destination: uploadPath,
     filename: (req, file, callback) => {
         const uniqueName =
@@ -179,7 +179,7 @@ export class ReportsController {
         description: 'Collection not found.',
     })
     @UseInterceptors(FileInterceptor('file', {
-        storage,
+    storage,
         limits: {
             fileSize: 25 * 1024 * 1024,
         },

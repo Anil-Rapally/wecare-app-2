@@ -362,9 +362,7 @@ export class ReportsService {
             id: In(collectionIds),
         })
         if (collections.length !== new Set(collectionIds).size) {
-            throw new BadRequestException(
-                this.i18n.translate('validation.INVALID_COLLECTION')
-            )
+            throw new BadRequestException({message: 'validation.COLLECTION_NOT_FOUND', messageArgs:collectionIds})
         }
         const existingIds = new Set(
             report.collections.map((collection) => collection.id)

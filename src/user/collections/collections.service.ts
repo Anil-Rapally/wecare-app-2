@@ -6,6 +6,7 @@ import { Collection } from '../entity/collection.entity';
 import { paginate, Paginated, PaginateQuery } from 'nestjs-paginate';
 import { CollectionsPaginationConfig } from 'src/common/config/collections_pagination.config';
 import { Report } from '../entity/reports.entity';
+import { CreateCollectionDto } from '../dto/create_collection.dto';
 
 @Injectable()
 export class CollectionsService {
@@ -58,14 +59,22 @@ export class CollectionsService {
     }
 
     async archiveCollections(ids: number[]) {
+        const collection = await this.collectionRepository.findBy({ id: In(ids) });
+        if (collection.length === 0) throw new NotFoundException({ message: 'validation.COLLECTION_NOT_FOUND' })
         await this.collectionRepository.update(ids, { is_archived: true });
     }
 
     async deleteCollections(ids: number[]) {
+        const collection = await this.collectionRepository.findBy({ id: In(ids) });
+        if (collection.length === 0) throw new NotFoundException({ message: 'validation.COLLECTION_NOT_FOUND' })
         await this.collectionRepository.delete(ids);
     }
 
     async editCollection(id: number, newname: string) {
+        const collection = await this.collectionRepository.findOne({
+            where: { id: id }
+        });
+        if (!collection) throw new NotFoundException({ message: 'validation.COLLECTION_NOT_FOUND' })
         await this.collectionRepository.update(id, { name: newname })
     }
 
@@ -94,5 +103,27 @@ export class CollectionsService {
             .relation(Collection, 'reports')
             .of(collectionId)
             .remove(reportIds);
+    }
+
+
+    async createCollection( dto: CreateCollectionDto) {
+        const collectionName = dto.collection_name.trim();
+        let collection = await this.collectionRepository.findOne({
+            where: {
+                name: collectionName,
+            },
+        });
+        if (!collection) {
+            collection = this.collectionRepository.create({
+                name: collectionName,
+            });
+            collection = await this.collectionRepository.save(collection);
+            return {message:'validation.COLLECTION_CREATED'};
+        } 
+        if(collection) {
+            throw new BadRequestException({message: 'validation.COLLECTION_EXISTS'});
+        }else{
+            throw new BadRequestException({message: 'validation.COLLECTION_REQUIRED'});
+        }
     }
 }

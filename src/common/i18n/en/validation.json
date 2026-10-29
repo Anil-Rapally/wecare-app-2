@@ -4,8 +4,11 @@
     "otp_invalid": "Enter a valid 4-digit verification code.",
     "enter_name": "Please enter your name",
     "name_invalid": "Enter a valid name using letters only.",
+    "name_min": "Full Name must be at least 1 characters",
+    "name_max": "Full Name must not exceed 70 characters",
     "select_dob": "Select date of birth",
     "valid_dob": "Enter a valid date of birth",
+    "dob_format": "Date of Birth should be in the YYYY-MM-DD Format",
     "select_gender": "Select your gender",
     "valid_gender": "Enter a valid gender",
     "select_blood_group": "Select blood group",
@@ -16,9 +19,9 @@
     "invalid_input": "Invalid input",
     "address_invalid": "Enter a valid address.",
     "address_too_long": "Address cannot exceed 500 characters.",
-    "upload_photo_size": "Upload an image no larger than 2 MiB.",
+    "upload_photo_size": "Upload an image no larger than 2 MB.",
     "upload_photo_required": "Please select a profile photo to upload.",
-    "upload_too_many_files": "Upload one profile photo at a time.",
+    "upload_too_many_files": "Upload one profile photo.",
     "upload_unexpected_field": "Unexpected upload field.",
     "unsupported_image": "Unsupported image",
     "upload_photo_format": "Upload a valid, non-animated JPEG, PNG, or WebP image .",
@@ -47,6 +50,9 @@
     "expired_token": "Invalid or expired token. Verify your email again.",
     "invalid_token": "Invalid token",
     "too_many_attempts": "Too Many Attempts, Please Retry Later",
+
+    "collections_min":"collection_name must be at least 2 characters",
+    "collections_max": "collection_name must not exceed 40 characters",
 
 
     "REPORT_NAME_REQUIRED": "report_name should not be empty",
@@ -106,6 +112,8 @@
     "COLLECTION_NOT_FOUND":" Collection with ID {id} does not exist",
     "COLLECTION_REQUIRED":" Please select a collection or create a new collection",
     "NO_REPORTS_AVAILABLE":" No report available ",
+    "COLLECTION_EXISTS": "Collection already exists",
+    "COLLECTION_CREATED": "Collection created successfully.",
 
     "REPORT_NOT_FOUND": "Report not found"
 

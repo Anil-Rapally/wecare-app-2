@@ -3,6 +3,7 @@ import {
     Min, IsInt, Max,
     IsDateString,
     IsEnum,
+    IsNotEmpty,
 } from "class-validator";
 import { Type } from "class-transformer";
 
@@ -17,7 +18,7 @@ export class CollectionQueryDto {
         description: 'Page number',
         example: 1,
     })
-    @IsOptional()
+    @IsNotEmpty()
     @Type(() => Number)
     @Min(1, {
         message: i18nValidationMessage('validation.PAGE_MIN')
@@ -33,7 +34,7 @@ export class CollectionQueryDto {
         description: 'Number of collection per page',
         example: 10,
     })
-    @IsOptional()
+    @IsNotEmpty()
     @Type(() => Number)
     @Min(1, {
         message: i18nValidationMessage('validation.LIMIT_MIN')

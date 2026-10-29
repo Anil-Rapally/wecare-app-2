@@ -3,7 +3,8 @@ import {
   MinLength, IsOptional,
   IsDateString, IsNumber,
   MaxLength, Matches,
-  IsDefined
+  IsDefined,
+  ValidateIf
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 
@@ -149,6 +150,7 @@ export class UploadReportsDto {
   @MaxLength(255, {
     message: i18nValidationMessage('validation.TAGS_MAX'),
   })
+  @ValidateIf((object, value) => value !== undefined && value !== null && value !== '')
   @Matches(/[a-zA-Z]/, {
     message: i18nValidationMessage('validation.TAGS_TEXT'),
   })
