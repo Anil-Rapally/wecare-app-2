@@ -6,12 +6,13 @@ import { AddIsArchivedToReport1792746951905 } from '../../database/migrations/17
 
 import { MoveReportFilesToLocalStorage1792841706147 } from '../../database/migrations/1792841706147-MoveReportFilesToLocalStorage';
 import { RemoveFileDataFromReport1792996510396 } from '../../database/migrations/1792996510396-RemoveFileDataFromReport';
-import { ChangeReportCollectionRelationship1791780243903 } from 'src/database/migrations/1791780243903-ChangeReportCollectionRelationship';
-import { AddNotesToReport1791372932013 } from 'src/database/migrations/1791372932013-AddNotesToReport';
+import { ChangeReportCollectionRelationship1791780243903 } from '../../database/migrations/1791780243903-ChangeReportCollectionRelationship';
+import { AddNotesToReport1791372932013 } from '../../database/migrations/1791372932013-AddNotesToReport';
+import { CreateReportShares1793267368195 } from '../../database/migrations/1793267368195-CreateReportShares';
 
-
-import { Report } from 'src/user/entity/reports.entity';
-import { Collection } from 'src/user/entity/collection.entity';
+import { Report } from '../../user/entity/reports.entity';
+import { Collection } from '../../user/entity/collection.entity';
+import { ReportShare } from '../../user/entity/report-share.entity';
 
 export function validateEnvironment(environment: Record<string, unknown>): Record<string, unknown> {
   const result = {
@@ -76,15 +77,16 @@ export function databaseOptions(): DataSourceOptions {
     database: process.env.DB_DATABASE,
     charset: 'utf8mb4_unicode_ci',
     timezone: 'Z',
-    entities: [UsersEntity, Report, Collection,],
+    entities: [UsersEntity, Report, Collection,ReportShare,],
     migrations: [
-     UsersLogin1791350158931,
-      ExpandReportFileData1791289524000,
-      AddIsArchivedToReport1792746951905,
-      MoveReportFilesToLocalStorage1792841706147,
-      RemoveFileDataFromReport1792996510396,
-      AddNotesToReport1791372932013,
-      ChangeReportCollectionRelationship1791780243903,
+    //  UsersLogin1791350158931,
+    //   ExpandReportFileData1791289524000,
+    //   AddIsArchivedToReport1792746951905,
+    //   MoveReportFilesToLocalStorage1792841706147,
+    //   RemoveFileDataFromReport1792996510396,
+    //   AddNotesToReport1791372932013,
+    //   ChangeReportCollectionRelationship1791780243903,
+      CreateReportShares1793267368195,
     ],
     migrationsTableName: 'migrations',
     synchronize: false,

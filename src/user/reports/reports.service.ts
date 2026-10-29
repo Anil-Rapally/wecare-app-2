@@ -14,9 +14,8 @@ import { paginate, Paginated, PaginateQuery, } from 'nestjs-paginate';
 import { I18nService } from 'nestjs-i18n';
 
 import { unlink } from 'fs/promises';
-import { resolve } from 'path';
-import { existsSync } from 'fs';
-import * as fs from 'fs/promises'
+import { resolve, extname } from 'path';
+import { Storage } from '@nestjs/storage';
 
 type MonthlyReport = {
     totalReport: number;
@@ -35,7 +34,9 @@ export class ReportsService {
         @InjectRepository(Collection)
         private readonly collectionRepository: Repository<Collection>,
 
-        private readonly i18n: I18nService
+        private readonly i18n: I18nService,
+
+        private readonly storage: Storage,
 
     ) { }
 
@@ -150,34 +151,34 @@ export class ReportsService {
 
     async globalSearch(
         query: string,
-    ){
+    ) {
         const searchQuery = query?.trim();
 
-        if(!searchQuery){
-            return{
-                reports:[],
-                collections:[]
+        if (!searchQuery) {
+            return {
+                reports: [],
+                collections: []
             }
         }
 
         const search = `%${searchQuery}%`;
 
-        const [reports,collections] = await Promise.all([
+        const [reports, collections] = await Promise.all([
             this.reportRepository
-            .createQueryBuilder('report')
-            .leftJoinAndSelect('report.collections','Collection')
-            .where('report.report_name LIKE :search',{search})
-            .orWhere('report.Doctor_name LIKE :search',{search})
-            .orWhere('report.Hospital_Or_Diagnostic_center LIKE :search',{search})
-            .orWhere('report.tags LIKE :search',{search})
-            .getMany(),
+                .createQueryBuilder('report')
+                .leftJoinAndSelect('report.collections', 'Collection')
+                .where('report.report_name LIKE :search', { search })
+                .orWhere('report.Doctor_name LIKE :search', { search })
+                .orWhere('report.Hospital_Or_Diagnostic_center LIKE :search', { search })
+                .orWhere('report.tags LIKE :search', { search })
+                .getMany(),
 
             this.collectionRepository
-            .createQueryBuilder('collection')
-            .where('collection.name LIKE :search',{search})
-            .getMany()
+                .createQueryBuilder('collection')
+                .where('collection.name LIKE :search', { search })
+                .getMany()
         ])
-        return{
+        return {
             reports,
             collections,
         }
@@ -246,6 +247,16 @@ export class ReportsService {
                 this.i18n.translate('validation.COLLECTION_REQUIRED'),
             );
         }
+        const fileKey = `${Date.now()}-${file.originalname}`;
+
+        await this.storage.disk('reports').put(
+            fileKey,
+            file.buffer,
+            {
+                contentType: file.mimetype,
+                contentLength: file.size,
+            },
+        );
 
         const report = this.reportRepository.create({
             report_name: reportData.report_name,
@@ -259,7 +270,7 @@ export class ReportsService {
             file_name: file.originalname,
             file_type: file.mimetype,
             file_size: file.size,
-            file_path: `uploads/reports/${file.filename}`,
+            file_path: `uploads/reports/${fileKey}`,
 
             collections: [collection],
         });
@@ -283,31 +294,37 @@ export class ReportsService {
 
         const report = await this.findById(id);
 
-
         const oldFilePath = report.file_path;
+
+        const fileKey =
+            `${Date.now()}-${Math.round(Math.random() * 1e9)}` +
+            extname(file.originalname);
+
+        // Save the new file using @nestjs/storage
+        await this.storage.disk('reports').put(
+            fileKey,
+            file.buffer,
+            {
+                contentType: file.mimetype,
+                contentLength: file.size,
+            },
+        );
 
         report.file_name = file.originalname;
         report.file_type = file.mimetype;
         report.file_size = file.size;
-        report.file_path = `uploads/${file.filename}`;
+        report.file_path = `uploads/reports/${fileKey}`;
 
         const savedReport = await this.reportRepository.save(report);
 
-        if(oldFilePath){
-            const oldAbsoultePath = resolve(process.cwd(),oldFilePath);
+        // Delete the old file after the database update succeeds
+        if (oldFilePath && oldFilePath !== savedReport.file_path) {
+            const oldKey = oldFilePath.replace(/^uploads\/reports\//, '');
 
-            const newAbsoultePath = resolve(process.cwd(),report.file_path);
-
-            if(oldAbsoultePath!== newAbsoultePath){
-                try{
-                    await unlink(oldAbsoultePath);
-                } catch(error){
-                    const err= error as NodeJS.ErrnoException;
-
-                    if(err.code !== 'ENOENT'){
-                        throw error;
-                    }
-                }
+            try {
+                await this.storage.disk('reports').delete(oldKey);
+            } catch (error) {
+                console.error('Failed to delete the old report file:', error);
             }
         }
 
@@ -317,7 +334,7 @@ export class ReportsService {
             file_path: savedReport.file_path,
             file_type: savedReport.file_type,
             file_size: savedReport.file_size,
-        }
+        };
     }
 
     // Update an existing report's details.

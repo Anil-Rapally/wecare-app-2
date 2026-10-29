@@ -11,6 +11,9 @@ import { RedisModule } from './common/redis/redis.module';
 import { ResponseInterceptor } from './common/interceptors/Response.interceptor';
 import { ReportsModule } from './user/reports/reports.module';
 import { CollectionsModule } from './user/collections/collections.module';
+import { StorageModule } from '@nestjs/storage';
+import { createStorageOptions } from './storage/storage.config';
+import { ReportShareModule } from './user/report-share/report-share.modules';
 
 @Module({
   imports: [UserModule,
@@ -23,16 +26,22 @@ import { CollectionsModule } from './user/collections/collections.module';
       fallbackLanguage: 'en',
       loader: I18nJsonLoader,
       loaderOptions: {
-        path: join(__dirname, 'common', 'i18n'),
+        path: join(process.cwd(), 'src', 'common', 'i18n'),
         watch: false,
       },
       resolvers: [
         AcceptLanguageResolver,
       ],
     }),
+
+    StorageModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory:(config:ConfigService)=> createStorageOptions(config),
+    }),
     RedisModule,
     ReportsModule,
     CollectionsModule,
+    ReportShareModule,
   ],
   controllers: [AppController],
   providers: [AppService, ResponseInterceptor],
