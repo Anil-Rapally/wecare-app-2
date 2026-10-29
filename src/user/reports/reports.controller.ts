@@ -25,8 +25,8 @@ import { UpdateReportDto } from '../dto/update.report.dto';
 import { AddReportToCollectionsDto } from '../dto/add-report-to-collections.dto';
 import { diskStorage } from 'multer';
 import { join, extname } from 'path';
-import { createReadStream, existsSync, mkdirSync } from 'fs';
-import { fileURLToPath } from 'url';
+import { existsSync, mkdirSync } from 'fs';
+import { memoryStorage } from 'multer';
 
 const uploadPath = join(process.cwd(), 'uploads/reports');
 
@@ -179,7 +179,7 @@ export class ReportsController {
         description: 'Collection not found.',
     })
     @UseInterceptors(FileInterceptor('file', {
-    storage,
+        storage:memoryStorage,
         limits: {
             fileSize: 25 * 1024 * 1024,
         },

@@ -15,6 +15,7 @@ import { ReportsModule } from './user/reports/reports.module';
 import * as express from 'express';
 import { join } from 'path';
 import { ResponseInterceptor } from './common/interceptors/Response.interceptor'
+import { ReportShareModule } from './user/report-share/report-share.modules';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -54,7 +55,7 @@ async function bootstrap(): Promise<void> {
     .build()
 
   const docDevA = SwaggerModule.createDocument(app, Reports, {
-    include: [ReportsModule, CollectionsModule], // only reports and controller modules 
+    include: [ReportsModule, CollectionsModule,ReportShareModule], // only reports and controller modules 
   });
   const swaggerConfig = new DocumentBuilder()
     .setTitle('WeCare API')

@@ -142,7 +142,6 @@ export class UserService {
     }
 
 
-
     async getProfilePhoto(userId: string) {
         const user = await this.userRepository.findOne({
             where: { id: userId },
@@ -162,9 +161,6 @@ export class UserService {
             view_url: `http://localhost:3000/${user.profile_photo_path.replace(/\\/g, '/')}`,
         };
     }
-
-
-
 
     async skipSignup(userId: string) {
         const user = await this.userRepository.findOne({ where: { id: userId } });
@@ -210,3 +206,5 @@ export class UserService {
         };
     }
 }
+
+//npm typeorm-ts-node-commonjs migration:generate src/database/migrations/CreateReportShare -d src/database/data-source.ts  
