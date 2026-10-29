@@ -12,12 +12,9 @@ import { I18nService } from 'nestjs-i18n';
 import { ResponseExceptionFilter } from './common/filters/response.exceptions';
 import { CollectionsModule } from './user/collections/collections.module';
 import { ReportsModule } from './user/reports/reports.module';
-
-
-
 import * as express from 'express';
 import { join } from 'path';
-import { ResponseInterceptor } from './common/interceptors/response.interceptor'
+import { ResponseInterceptor } from './common/interceptors/Response.interceptor'
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -80,5 +77,6 @@ async function bootstrap(): Promise<void> {
 }
 
 bootstrap().catch((error) => {
+  console.log('Bootstrap error', error);
   process.exitCode = 1;
 });

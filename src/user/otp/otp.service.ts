@@ -27,7 +27,7 @@ export class OtpService {
     const otp = randomInt(0, 10000).toString().padStart(4, '0');
     const ttl = 300;
     const { type, identifier } = this.identifyUser(user_identifier);
-    type === 'email' && await this.mail.sendOtp(identifier, otp);
+    //type === 'email' && await this.mail.sendOtp(identifier, otp);
     await this.redis.set(`otp:${identifier}`, otp, 'EX', ttl);
     console.log(otp);
     return { message: 'validation.otp_sent_successfully' };
