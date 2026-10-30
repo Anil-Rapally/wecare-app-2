@@ -6,7 +6,9 @@ import {
     Get,
     Req,
     Res,
-    StreamableFile
+    StreamableFile,
+    Patch,
+    Body
 } from '@nestjs/common';
 
 import { ReportShareService } from './report-share.service';
@@ -20,6 +22,7 @@ import {
 } from '@nestjs/storage';
 
 import type { Request, Response } from 'express';
+import { ShareReportsAndCollections } from '../dto/share_reports_and_collections.dto';
 
 @ApiTags('Share reports & collections')
 @Controller()
@@ -54,5 +57,22 @@ export class ReportShareController {
         @Param('reportId', ParseIntPipe) reportId: number,
     ) {
         return this.reportShareService.createShareLink(reportId);
+    }
+
+
+    @Patch('extend-access')
+    @ApiOperation({
+        summary: 'Extens Collection or Report Access',
+    })
+    async extendAccess(@Body() dto:ShareReportsAndCollections){
+        return this.reportShareService.extendAccess(dto);
+    }
+
+    @Patch('revoke-access')
+    @ApiOperation({
+        summary: 'Revoke Collection or Report Access'
+    })
+    async revokeAccess(@Body() dto:ShareReportsAndCollections){
+        return this.reportShareService.revokeAccess(dto);
     }
 }

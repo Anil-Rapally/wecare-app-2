@@ -1,16 +1,16 @@
 import {
+    BadRequestException,
     Injectable,
     NotFoundException,
 } from '@nestjs/common';
 
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-
 import { InjectDisk, StorageDisk } from '@nestjs/storage';
-
 import { ReportShare } from '../entity/report-share.entity';
 import { Report } from '../entity/reports.entity';
 import { Collection } from '../entity/collection.entity';
+import { ShareReportsAndCollections } from '../dto/share_reports_and_collections.dto';
 
 
 @Injectable()
@@ -86,6 +86,43 @@ export class ReportShareService {
             },
         };
 
+    }
+
+    async extendAccess(dto: ShareReportsAndCollections) {
+
+        const shared_collections = await this.reportShareRepository.findBy({ id: dto.collection_id });
+        if (shared_collections.length === 0) {
+            throw new NotFoundException({ message: 'validation.SHARED_COLLECTION_NOT_FOUND' });
+        }
+        const shared_reports = await this.reportShareRepository.findOneBy({ id: dto.report_id });
+        if (!shared_reports) {
+            throw new NotFoundException({ message: 'validation.SHARED_REPORT_NOT_FOUND' });
+        }
+        await this.reportShareRepository.update(dto.report_id, { expires_at: dto.extendTo });
+
+
+
+
+
+    }
+
+    async revokeAccess(dto: ShareReportsAndCollections) {
+
+        if (dto.report_id) {
+            await this.reportShareRepository.update(dto.report_id, { expires_at: new Date() });
+            return {
+                message: 'validation.ACCESS_REVOKED'
+            };
+        }
+        else if (dto.collection_id) {
+            await this.reportShareRepository.update(dto.collection_id, { expires_at: new Date() });
+            return {
+                message: 'validation.ACCESS_REVOKED'
+            };
+        }
+        else {
+            throw new BadRequestException({ message: 'validation.SHARED_ID_NOT_FOUND' })
+        }
     }
 
 }

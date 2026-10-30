@@ -28,7 +28,7 @@ export class ReportShare {
   })
   permission: string;
 
-  @Column({ name: 'expires_at', type: 'datetime' })
+  @Column({ name: 'expires_at', type: 'datetime', nullable: true })
   expires_at: Date;
 
   @CreateDateColumn({ name: 'created_at' })

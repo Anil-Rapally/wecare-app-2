@@ -114,6 +114,10 @@
     "NO_REPORTS_AVAILABLE":" No report available ",
     "COLLECTION_EXISTS": "Collection already exists",
     "COLLECTION_CREATED": "Collection created successfully.",
+    "SHARED_COLLECTION_NOT_FOUND": "Shared collection not found",
+    "SHARED_REPORT_NOT_FOUND": "Shared Reports are not found",
+    "SHARED_ID_NOT_FOUND": "Select a Report or Collection to Revoke it's Access",
+    "ACCESS_REVOKED": "Access Revoked ",
 
     "REPORT_NOT_FOUND": "Report not found"
 
